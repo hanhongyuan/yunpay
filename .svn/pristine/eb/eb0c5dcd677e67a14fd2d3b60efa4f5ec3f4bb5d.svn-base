@@ -1,5 +1,0 @@
-##支付宝支付配置
-##条码支付API
-BAR_PAY_API = https://openapi.alipay.com/gateway.do
-##扫码支付API
-SCAN_PAY_API = https://openapi.alipay.com/gateway.do

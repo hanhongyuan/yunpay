@@ -1,5 +1,0 @@
-#静态资源地址
-web.view.index=/login
-
-web.view.prefix=/WEB-INF/views/
-web.view.suffix=.html

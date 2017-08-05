@@ -1,5 +1,0 @@
-#######微信卡券配置文件################
-##获取access_tokenAPI
-ACCESS_TOKEN_API =https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET
-##图片上传API
-UPLOAD_IMG_API =https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=ACCESS_TOKEN
