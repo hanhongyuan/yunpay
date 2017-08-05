@@ -1,0 +1,20 @@
+package com.yunpay.serv.service.card.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import com.yunpay.serv.service.card.CardTemplateService;
+import com.yunpay.wx.service.WechatCardService;
+
+@Service("cardTemplateService")
+public class CardTemplateServiceImpl implements CardTemplateService{
+	
+	@Autowired
+	private WechatCardService wechatCardService;
+	
+	@Cacheable(value="wxAccessToken",key="#appId")
+	public String recvAccessToken(String appId,String appSecret){
+		return wechatCardService.doAccessToken(appId, appSecret);
+	}
+}

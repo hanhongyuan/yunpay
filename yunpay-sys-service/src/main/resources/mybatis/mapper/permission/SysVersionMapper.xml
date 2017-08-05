@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunpay.permission.dao.impl.SysVersionDaoImpl">
+	<!-- 表 -->
+	<sql id="sd_sys_version"> SD_SYS_VERSION </sql>
+	
+	<!-- 添加数据 -->
+	<insert id="insertSysVersion" parameterType="com.yunpay.permission.entity.SysVersion" keyProperty="id" useGeneratedKeys="true">
+		insert into
+		<include refid="sd_sys_version" />
+		(ver_id,ver_type,ver_name,ver_no,ver_filename,ver_savename,ver_dir,ver_rmk,create_user,create_time)
+		values(SEQ_SYS_VERSIONVER_ID.nextval,#{verType,jdbcType=VARCHAR},#{verName,jdbcType=VARCHAR},#{verNo},
+		#{verFilename,jdbcType=VARCHAR},#{verSavename,jdbcType=VARCHAR},#{verDir,jdbcType=VARCHAR},
+		#{verRmk,jdbcType=VARCHAR},#{createUser,jdbcType=VARCHAR},#{createTime})
+	</insert>
+	
+	<select id="getSysVersion" parameterType="com.yunpay.permission.entity.SysVersion" resultType="com.yunpay.permission.entity.SysVersion">
+		select ver_id as verId,ver_type as verType,ver_name as verName,ver_no as verNo,
+      		ver_filename as verFilename,ver_savename as verSavename,ver_dir as verDir,ver_rmk as verRmk,
+			create_user as createUser,create_time as createTime from
+		<include refid="sd_sys_version" />
+		where ver_id = #{verId}
+	</select>
+	
+	<!-- 查询的sql条件 -->
+	<sql id="condition_sql">
+		<if test="verNo != null and verNo != ''"> and ver_no = #{verNo}</if>
+		<if test="verName != null and verName != ''"> and ver_name like CONCAT(CONCAT('%', #{verName}), '%')</if>
+	</sql>
+	
+	<!-- 分页查询 -->
+	<select id="listPage" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.SysVersion">
+		select * from (
+			 select rownum rowno,ver_id as verId,ver_type as verType,ver_name as verName,ver_no as verNo,
+      		ver_filename as verFilename,ver_savename as verSavename,ver_dir as verDir,ver_rmk as verRmk,
+			create_user as createUser,create_time as createTime from 
+			(select * from sd_sys_version order by create_time desc)
+		<where>
+			<include refid="condition_sql"></include>
+		</where>
+		) where rowno between #{startRowNum} and #{endRowNum}
+	</select>
+	
+	<select id="listPageCount" parameterType="java.util.Map" resultType="int">
+		select count(1) from
+		<include refid="sd_sys_version" />
+		<where>
+			<include refid="condition_sql" />
+		</where>
+	</select>
+	
+	<!-- 修改数据 -->
+	<update id="updateSysVersion" parameterType="com.yunpay.permission.entity.SysVersion">
+		update
+		<include refid="sd_sys_version" />
+		<set>
+			<if test="verName !=null and verName != ''">
+				ver_name = #{verName},
+			</if>
+			<if test="verType !=null and verType != ''">
+				ver_type = #{verType},
+			</if>
+			<if test="verRmk !=null and verRmk != ''">
+				ver_rmk = #{verRmk},
+			</if>
+		</set>
+		<where>
+			ver_id = #{verId}
+		</where>
+	</update>
+	
+	<!-- 根据区域编码删除数据 -->
+	<delete id="deleteSysVersion" parameterType="java.util.Map" >
+		delete from
+		<include refid="sd_sys_version" />
+		where ver_id = #{verId}
+	</delete>
+
+</mapper>

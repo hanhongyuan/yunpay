@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunpay.permission.dao.impl.AddressDaoImpl">
+	<!-- 获取所有的省市区数据 -->
+	<select id="getAllProv"  resultType="com.yunpay.permission.entity.Address">
+		select id,title,porder,parentid,code from t_yunpu_sys_address order by id
+	</select>
+	
+	<!-- 查询省信息 -->
+	<select id="getProvList"  resultType="com.yunpay.permission.entity.Address">
+		select id,title,porder,parentid,code from t_yunpu_sys_address where parentid = 0 order by id
+	</select>
+
+	<!-- 查询市信息 -->
+	<select id="getCityList" parameterType="java.lang.Integer" resultType="com.yunpay.permission.entity.Address">
+		select id,title,porder,parentid,code from t_yunpu_sys_address where parentid = #{id} order by id
+	</select>
+	
+	<!-- 查询区信息 -->
+	<select id="getAreaList" parameterType="java.lang.Integer" resultType="com.yunpay.permission.entity.Address">
+		select id,title,porder,parentid,code from t_yunpu_sys_address where parentid = #{id} order by id
+	</select>
+	<!--根据编码查询 -->
+	<select id="getByCode" parameterType="java.lang.String" resultType="com.yunpay.permission.entity.Address">
+		select s.id,s.title,s.porder,s.parentid,s.code 
+		from (select * from t_yunpu_sys_address where code=#{code} order by id desc ) s 
+		limit 1
+	</select>
+	<!-- 根据名称查询-->
+	<select id="getByTitle" parameterType="java.lang.String" resultType="com.yunpay.permission.entity.Address">		
+		select s.id,s.title,s.porder,s.parentid,s.code 
+		from (select * from t_yunpu_sys_address where title=#{title} order by id desc ) s 
+		limit 1
+	</select>
+	<!-- 根据id查询-->
+	<select id="getById" parameterType="java.lang.Integer" resultType="com.yunpay.permission.entity.Address">		
+		select id,title,porder,parentid,code from t_yunpu_sys_address where id=#{id}		
+	</select>
+</mapper>

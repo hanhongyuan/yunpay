@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunpay.permission.dao.impl.SysStoreTranDaoImpl">
+
+	<sql id="rpt_merch_tran_total"> RPT_MERCH_TRAN_TOTAL </sql>
+	
+	<resultMap id="beanMap" type="com.yunpay.permission.entity.StoreTranEntity">
+        <result column="merchId"        property="merchId"          jdbcType="VARCHAR" />
+        <result column="merchName"      property="merchName"        jdbcType="VARCHAR" />
+        <result column="storeNo"        property="storeNo"          jdbcType="VARCHAR" />
+        <result column="storeName"      property="storeName"        jdbcType="VARCHAR" />
+        <result column="provice"        property="provice"          jdbcType="VARCHAR" />
+        <result column="region"         property="region"           jdbcType="VARCHAR" />
+        <result column="area"           property="area"             jdbcType="VARCHAR" />
+        <result column="busiarea"       property="busiarea"         jdbcType="VARCHAR" />
+        <result column="tranNum"        property="tranNum"          jdbcType="VARCHAR" />
+        <result column="tranAmount"     property="tranAmount"       jdbcType="DOUBLE" />
+        <result column="avgAmount"      property="avgAmount"        jdbcType="DOUBLE" />
+        <result column="startTranDate"  property="startTranDate"    jdbcType="VARCHAR" />
+        <result column="endTranDate"    property="endTranDate"      jdbcType="VARCHAR" />
+        <result column="maxTranNum"     property="maxTranNum"       jdbcType="VARCHAR" />
+        <result column="numTranDate"    property="numTranDate"      jdbcType="VARCHAR" />
+        <result column="maxTranAmount"  property="maxTranAmount"    jdbcType="DOUBLE" />
+        <result column="amountTranDate" property="amountTranDate"   jdbcType="VARCHAR" />
+        <result column="totalTranDay"   property="totalTranDay"     jdbcType="VARCHAR" />
+        <result column="totalUntranDay" property="totalUntranDay"   jdbcType="VARCHAR" />
+        <result column="contracter"     property="contracter"       jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="listPageCount" parameterType="java.util.Map" resultType="int">
+        select count(1) from <include refid="rpt_merch_tran_total" /> s 
+                    left join sd_merch_base_info smbi on smbi.merch_id = s.merch_id 
+                    left join tsys_area_code tac1 on tac1.areacode = s.provice_code 
+                    left join tsys_area_code tac2 on tac2.areacode = s.region_code 
+                    left join TSYS_EMPLOYEE emp on smbi.serverman=emp.empno
+        <where>
+            <include refid="factor_sql" />
+        </where>
+    </select>
+    
+    <!-- 分页 -->
+    <select id="listPage" parameterType="java.util.Map" resultMap="beanMap">
+	    select * from (
+	        select t.*,rownum rowno from
+	        (select null as storeid,s.merch_id as merchid, null as storeName, smbi.name_short as merchName,tac1.areaname as provice, tac2.areaname as region,
+	                null as area,null as busiarea, tran_num as tranNum, s.tran_amount as tranAmount,s.avg_amount as avgAmount, s.start_tran_date as startTranDate, 
+	                end_tran_date as endTranDate,s.max_tran_num as maxTranNum, s.num_tran_date as numTranDate, s.max_tran_amount as maxTranAmount,
+	                s.amount_tran_date as amountTranDate, s.total_tran_day as totalTranDay, s.total_untran_day as totalUntranDay,emp.empname as contracter 
+	                from <include refid="rpt_merch_tran_total" /> s 
+	                left join sd_merch_base_info smbi on smbi.merch_id = s.merch_id 
+	                left join tsys_area_code tac1 on tac1.areacode = s.provice_code 
+	                left join tsys_area_code tac2 on tac2.areacode = s.region_code 
+	                left join TSYS_EMPLOYEE emp on smbi.serverman=emp.empno
+                    <where>
+		                <include refid="factor_sql" />
+		            </where>
+		            order by s.end_tran_date desc ,s.merch_id desc 
+            ) t) 
+	        where rowno between #{startRowNum} and #{endRowNum}
+        order by rowno
+    </select>
+    
+    <!-- 导出专用 -->
+    <select id="merchTranExcel" resultMap="beanMap">
+        select null as storeid,s.merch_id as merchid, null as storeName,smbi.name_short as merchName,tac1.areaname as provice, tac2.areaname as region,
+            null as area,null as busiarea, nvl(tran_num,0) as tranNum,nvl(s.tran_amount,0) as tranAmount,nvl(s.avg_amount,0) as avgAmount, s.start_tran_date as startTranDate,
+            end_tran_date as endTranDate,nvl(s.max_tran_num,0) as maxTranNum, s.num_tran_date as numTranDate,nvl(s.max_tran_amount,0) as maxTranAmount,
+            s.amount_tran_date as amountTranDate, s.total_tran_day as totalTranDay,s.total_untran_day as totalUntranDay,emp.empname as contracter 
+            from <include refid="rpt_merch_tran_total" /> s
+            left join sd_merch_base_info smbi on smbi.merch_id = s.merch_id
+            left join tsys_area_code tac1 on tac1.areacode = s.provice_code
+            left join tsys_area_code tac2 on tac2.areacode = s.region_code
+            left join TSYS_EMPLOYEE emp on smbi.serverman=emp.empno 
+            order by s.end_tran_date desc ,s.merch_id desc
+    </select>
+    
+    
+    <sql id="factor_sql">
+        <!-- 动态语句 -->
+        <if test="provice != null and provice != ''">   and s.provice_code = #{provice }</if>
+        <if test="region   != null and region != ''">   and s.region_code = #{region }</if>
+        <if test="merchName   != null and merchName != ''">   and smbi.name_short like CONCAT(CONCAT('%', #{merchName}), '%')</if>
+        <if test="minavgAmount   != null and minavgAmount != ''">     and s.avg_amount &gt; #{minavgAmount }</if>
+        <if test="maxavgAmount   != null and maxavgAmount != ''">     and s.avg_amount &lt; #{maxavgAmount }</if>
+        <if test="mintranAmount   != null and mintranAmount != ''">   and s.tran_amount &gt; #{mintranAmount }</if>
+        <if test="maxtranAmount   != null and maxtranAmount != ''">   and s.tran_amount &lt; #{maxtranAmount }</if>
+        <if test="mintranNum   != null and mintranNum != ''">         and tran_num &gt; #{mintranNum }</if>
+        <if test="dataType   != null and dataType != ''">         and smbi.status = #{dataType }</if>
+        <if test="dataType1   != null and dataType1 != ''">       or smbi.status = #{dataType1 }</if>
+    </sql>
+    
+</mapper>

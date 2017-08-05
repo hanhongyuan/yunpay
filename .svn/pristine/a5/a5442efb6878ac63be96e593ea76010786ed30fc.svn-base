@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunpay.permission.dao.impl.SysUpgradePlanDaoImpl">
+
+    <sql id="sd_upgrade_plan"> SD_UPGRADE_PLAN </sql>
+    
+    <resultMap id="beanMap" type="com.yunpay.permission.entity.UpgradePlanEntity">
+        <result column="planId"         property="planId"       jdbcType="VARCHAR" />
+        <result column="verId"          property="verId"        jdbcType="VARCHAR" />
+        <result column="planName"       property="planName"     jdbcType="VARCHAR" />
+        <result column="beginDate"      property="beginDate"    jdbcType="VARCHAR" />
+        <result column="planRemark"     property="planRemark"   jdbcType="VARCHAR" />
+        <result column="createUser"     property="createUser"   jdbcType="VARCHAR" />
+        <result column="createTime"     property="createTime"   jdbcType="TIMESTAMP" />
+        <result column="planStatus"     property="planStatus"   jdbcType="VARCHAR" />
+        <result column="percent"        property="percent"      jdbcType="VARCHAR" />
+    </resultMap>
+    
+    <!-- 统计条数 -->
+    <select id="listPageCount" parameterType="java.util.Map" resultType="long">
+        select count(1) 
+               from <include refid="sd_upgrade_plan" /> sup
+               left join sd_sys_version ssv on ssv.ver_id = sup.ver_id
+               left join (select t.plan_id,nvl(count(*),0) as finishcount from sd_plan_detail t where t.upd_status='4' group by t.plan_id) finish on sup.plan_id=finish.plan_id
+               left join (select t.plan_id,nvl(count(*),0) as totalcount from sd_plan_detail t group by t.plan_id) total on sup.plan_id=total.plan_id
+        <where>
+            <include refid="factor_sql" />
+        </where>
+    </select>
+    
+    <!-- 分页 -->
+    <select id="listPage" parameterType="java.util.Map" resultMap="beanMap">
+        select * from (
+            select UpgradePlan.*,rownum rowno from
+            (select sup.plan_id  as planId, sup.ver_id as verId, sup.plan_name  as planName,to_char(sup.begin_date,'yyyy-mm-dd')  as beginDate,
+			        sup.plan_remark as planRemark,sup.create_user as createUser,sup.create_time as createTime,sup.plan_status as planStatus,
+			        nvl(round(( finish.finishcount/total.totalcount)*100,2),0)||'%' as percent,ssv.ver_name as verName,ssv.ver_no as verNo 
+			        from (select * from <include refid="sd_upgrade_plan" /> order by create_time desc ) sup
+			        left join sd_sys_version ssv on ssv.ver_id = sup.ver_id
+			        left join (select t.plan_id,nvl(count(*),0) as finishcount from sd_plan_detail t where t.upd_status='4' group by t.plan_id) finish on sup.plan_id=finish.plan_id
+			        left join (select t.plan_id,nvl(count(*),0) as totalcount from sd_plan_detail t group by t.plan_id) total on sup.plan_id=total.plan_id
+            <where>
+                <include refid="factor_sql" />
+            </where>
+            )UpgradePlan) where rowno between #{startRowNum} and #{endRowNum}
+        order by rowno
+    </select>
+    
+    <select id="termMerchCount" parameterType="java.util.Map" resultType="long">
+        select count(*) 
+        from sd_merch_term t1 
+        left join sd_store t2 on t2.store_id=t1.store_id 
+        <where>
+            <include refid="term_factor_sql" />
+        </where>
+        order by t1.create_date desc
+    </select>
+    
+    <select id="termMerchList" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.TermMerchEntity">
+    select * from (
+            select term.*,rownum rowno from
+            (select t1.term_seq as termSeq,t2.store_name as storeName,t2.address, t2.store_id as storeNo 
+                    from sd_merch_term t1 
+                    left join sd_store t2 on t2.store_id=t1.store_id 
+		            <where>
+		                <include refid="term_factor_sql" />
+		            </where>
+		            order by t1.create_date desc
+            )term) where rowno between #{startRowNum} and #{endRowNum}
+        order by rowno
+    </select>
+    
+    <update id="editPlanStatus" parameterType="java.util.Map">
+        update <include refid="sd_upgrade_plan" /> set plan_status = #{planStatus} where plan_id = #{planId}
+    </update>
+    
+    <update id="editPlanDetailStatus" parameterType="java.util.Map">
+        update sd_plan_detail set upd_status = #{planStatus} where plan_id = #{planId}
+    </update>
+    
+    <select id="findVer" resultType="com.yunpay.permission.entity.ComboxValue">
+          select ver_id as code,ver_no||ver_name as name from sd_sys_version
+    </select>
+    
+    <delete id="delUpgradePlan">
+        delete from <include refid="sd_upgrade_plan" /> where plan_id = #{planId} 
+    </delete>
+    
+    <delete id="delUpgradeDetailPlan">
+        delete from sd_plan_detail where plan_id = #{planId} 
+    </delete>
+    
+    <select id="viewUpgradePlanCount" parameterType="java.util.Map" resultType="long">
+        select count(*) 
+            from sd_plan_detail spd 
+            where spd.plan_id = #{planId}
+    </select>
+    
+    <select id="viewUpgradePlanList" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.PlanDetailEntity">
+        select * from ( 
+             select detail.*,rownum rowno from
+            (select spd.detail_id as detailId,spd.plan_id as planId,spd.term_seq as termSeq,
+                   spd.upd_status as updStatus, spd.upd_date as updDate,spd.begin_date as beginDate 
+                    from (select * from sd_plan_detail order by upd_date desc ) spd
+                    where spd.plan_id = #{planId}
+            )detail) 
+            where rowno between #{startRowNum} and #{endRowNum}
+    </select>
+    
+    <insert id="addupgradePlan" parameterType="java.util.Map">
+        insert into <include refid="sd_upgrade_plan" />(plan_id,ver_id,plan_name,begin_date,plan_remark,create_user,create_time,plan_status)
+            values(#{PlanId},#{VerId},#{PlanName},to_date(#{BeginDate},'yyyy-mm-dd'),#{PlanRemark},#{CreateUser},#{CreateTime},#{PlanStatus})
+    </insert>
+    
+    <insert id="addUpgradeDetailPlan" parameterType="java.util.Map">
+        insert into sd_plan_detail(detail_id,plan_id,term_seq,upd_status) values(SEQ_PLANDETAIL_ID.nextval,#{PlanId},#{TermSeq},#{UpdStatus})
+    </insert>
+    
+    <update id="editupgradePlan" parameterType="java.util.Map">
+        update sd_upgrade_plan set ver_id=#{VerId},plan_name=#{PlanName},begin_date=to_date(#{BeginDate},'yyyy-mm-dd'),plan_remark=#{PlanRemark},
+            create_user=#{CreateUser},plan_status=#{PlanStatus} where plan_id=#{PlanId}
+    </update>
+    
+    <select id="findUpgradePlanById" resultMap="beanMap">
+        select plan_id as planId,ver_id as verId,plan_name as planName,begin_date as beginDate,plan_remark as planRemark,create_user as createUser,
+            create_time as createTime,plan_status as planStatus,'' as percent 
+            from <include refid="sd_upgrade_plan" />
+            where plan_id = #{planId}
+    </select>
+    
+    <select id="findPlanDetailList" resultType="com.yunpay.permission.entity.PlanDetailEntity">
+       select spd.detail_id as detailId,spd.plan_id as planId,spd.term_seq as termSeq,spd.upd_status as updStatus,spd.upd_date as updDate,spd.begin_date as beginDate 
+            from sd_plan_detail spd 
+            where spd.plan_id = #{planId}
+            order by spd.upd_date desc 
+    </select>
+    
+    <select id="findUpgradeDetailPlan" resultType="com.yunpay.permission.entity.PlanDetailEntity">
+        select spd.detail_id as detailId,spd.plan_id as planId,spd.term_seq as termSeq,spd.upd_status as updStatus,spd.upd_date as updDate,spd.begin_date as beginDate 
+            from sd_plan_detail spd 
+            where spd.plan_id = #{planId}
+    </select>
+    
+    <sql id="term_factor_sql">
+        <if test="storeNo != null and storeNo != ''"> and t2.store_id like CONCAT(CONCAT('%', #{storeNo}), '%')</if>
+        <if test="storeName != null and storeName != ''"> and t2.store_name like CONCAT(CONCAT('%', #{storeName}), '%')</if>
+        <if test="termSeq != null and termSeq != ''"> and t1.term_seq = #{termSeq}</if>
+    </sql>
+    
+    <sql id="factor_sql">
+        <!-- 动态语句 -->
+        <if test="planId != null and planId != ''"> and sup.plan_id like CONCAT(CONCAT('%', #{planId}), '%')</if>
+        <if test="planName   != null and planName != ''">   and sup.plan_name like CONCAT(CONCAT('%', #{planName}), '%')</if>
+        <if test="planStatus != null and planStatus != ''"> and sup.plan_status = ${planStatus}</if>
+    </sql>
+</mapper>

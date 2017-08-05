@@ -1,0 +1,48 @@
+package com.yunpay.wx.service.impl;
+
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSONObject;
+import com.yunpay.common.utils.HttpUtil;
+import com.yunpay.common.utils.Log;
+import com.yunpay.wx.config.WechatCardConfig;
+import com.yunpay.wx.service.WechatCardService;
+
+/**
+ * 微信卡券核心业务实现类
+ * 文件名称:     WechatCardServiceImpl.java
+ * 内容摘要: 
+ * @author:   Zeng Dongcheng
+ * @version:  1.0  
+ * @Date:     2017年7月31日上午11:22:55 
+ * 
+ * 修改历史:  
+ * 修改日期                     修改人员                                   版本	            修改内容  
+ * ----------------------------------------------  
+ * 2017年7月31日     Zeng Dongcheng   1.0     新建
+ *
+ * 版权:   版权所有(C)2017
+ * 公司:   深圳市至高通信技术发展有限公司
+ */
+@Service
+public class WechatCardServiceImpl implements WechatCardService{
+
+	/**
+	 * @Description:获取access_token
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年7月31日上午11:23:09 
+	 * @param appId      微信公众号appId
+	 * @param appSecret  公众号密钥appSecret
+	 * @return	access_token
+	 */
+	@Override
+	public String doAccessToken(String appId, String appSecret) {
+		// TODO Auto-generated method stub
+		String reqUrl = WechatCardConfig.ACCESS_TOKEN_API.replace("APPID", appId)
+				.replace("APPSECRET", appSecret);
+		JSONObject jsonObj = JSONObject.parseObject(HttpUtil.doGet(reqUrl, null, "UTF-8", false));
+		Log.debug("access_token recv"+jsonObj);
+		return jsonObj.get("access_token").toString();
+	}
+
+}

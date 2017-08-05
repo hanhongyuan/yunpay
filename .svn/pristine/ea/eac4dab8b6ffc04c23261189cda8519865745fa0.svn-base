@@ -1,0 +1,178 @@
+package com.yunpay.sdk.ctrl;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.alibaba.fastjson.JSONObject;
+import com.yunpay.common.exception.YunPayException;
+import com.yunpay.common.utils.EnumUtil.CardCodeType;
+import com.yunpay.common.utils.EnumUtil.CardDateType;
+import com.yunpay.common.utils.EnumUtil.ResultCode;
+import com.yunpay.serv.rep.Message;
+import com.yunpay.serv.service.card.CardService;
+import com.yunpay.wx.req.card.CardBaseInfo;
+import com.yunpay.wx.req.card.CashCardReq;
+import com.yunpay.wx.req.card.CreateQrCodeReq;
+
+
+/**
+ * 卡券模板类
+ * 文件名称:     CardTemplateCtrl.java
+ * 内容摘要: 
+ * @author:   Zeng Dongcheng
+ * @version:  1.0  
+ * @Date:     2017年7月31日下午6:02:23 
+ * 
+ * 修改历史:  
+ * 修改日期                     修改人员                                   版本	            修改内容  
+ * ----------------------------------------------  
+ * 2017年7月31日     Zeng Dongcheng   1.0     新建
+ *
+ * 版权:   版权所有(C)2017
+ * 公司:   深圳市至高通信技术发展有限公司
+ */
+@RestController
+public class CardTemplateCtrl extends BaseCtrl{
+	
+	private static final String APPID = "wxcbf364c912dd0987";
+	
+	private static final String APPSECRET = "824a09a0964de75b98ce54fbddda7ec9";
+	
+	private static final String IMGPATH = "E:\\fileUpload\\";
+	
+	private static final String IMGURL = "http://mmbiz.qpic.cn/mmbiz_jpg/FVibS3ibBAISOneJBtFUMsRqENxGuLm2nvYpySoLnqQnsafbtrgVcYDFSBovVv8a0OiasmF3UoZ6hXrVgEqMZz0Zw/0";
+	
+	private static final String CARDID = "p_waUv3hxxKxlY1Uh4NeGlGO9LsQ";
+	
+	@Autowired
+	private CardService cardService;
+	
+	/**
+	 * @Description: 测试获取access_token
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年8月1日上午11:20:44 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value="/card/create/token",method=RequestMethod.GET)
+    public Object doAccessToken(HttpServletRequest request, HttpServletResponse response){
+		Message message;
+		try{
+			String accessToken = cardService.recvAccessToken(APPID, APPSECRET);
+			message = new Message(accessToken);
+		}catch(YunPayException e){
+			message = new Message(ResultCode.EXCEPTION.getCode(),e.toString());
+		}
+		return message;
+    }
+	
+	/**
+	 * @Description: 测试图片上传
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年8月1日上午11:20:34 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value="/card/img/upload",method=RequestMethod.GET)
+	public Object doUploadImg(HttpServletRequest request, HttpServletResponse response){
+		Message message;
+		String fileName = request.getParameter("fileName");
+		try{
+			String accessToken = cardService.recvAccessToken(APPID, APPSECRET);
+			String imgUrl = IMGPATH+fileName;
+			String url = cardService.uploadWxImg(imgUrl, accessToken);
+			message = new Message(url);
+		}catch(YunPayException e){
+			message = new Message(ResultCode.EXCEPTION.getCode(),e.toString());
+		}
+		return message;
+	}
+	
+	
+	/**
+	 * @Description: 创建卡券
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年8月1日下午5:18:01 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value="/card/create/card")
+	public Object doCreateCard(HttpServletRequest request, HttpServletResponse response){
+		String accessToken="";
+		try{
+			accessToken = cardService.recvAccessToken(APPID, APPSECRET);
+		}catch(YunPayException e){
+			return new Message(ResultCode.EXCEPTION.getCode(),e.toString());
+		}
+		CashCardReq cardReq = new CashCardReq();
+		//必填项
+		cardReq.setCard_type("CASH");
+		CardBaseInfo baseInfo = new CardBaseInfo();
+		baseInfo.setLogo_url(IMGURL);
+		baseInfo.setCode_type(CardCodeType.QRCODE.getCode());
+		baseInfo.setBrand_name("移领科技");
+		baseInfo.setTitle("1元兑换券");
+		baseInfo.setColor("Color020");
+		baseInfo.setNotice("请出示二维码");
+		baseInfo.setDescription("不可与其他优惠同享");
+		baseInfo.setSku(1000);
+		baseInfo.setDate_info(CardDateType.FIX_TERM.getCode(), null, null, 60, 0);
+		//非必填项
+		baseInfo.setService_phone("0755-2233445");
+		baseInfo.setUse_all_locations(true);
+		//baseInfo.setCenter_title("立即使用");
+		//baseInfo.setCenter_sub_title("立即享受优惠");
+		//baseInfo.setCenter_url("www.gnete.cn");
+		baseInfo.setGet_limit(10);
+		baseInfo.setUse_limit(4);
+		baseInfo.setCan_share(true);
+		baseInfo.setCan_give_friend(true);
+		cardReq.setCash(100, 100, baseInfo);
+		return cardService.createWxCard(cardReq, accessToken);
+	}
+	
+	
+	/**
+	 * @Description: 创建卡券
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年8月1日下午5:18:01 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value="/card/create/qrcode")
+	public Object doCreateQrcode(HttpServletRequest request, HttpServletResponse response){
+		String accessToken="";
+		try{
+			accessToken = cardService.recvAccessToken(APPID, APPSECRET);
+		}catch(YunPayException e){
+			return new Message(ResultCode.EXCEPTION.getCode(),e.toString());
+		}
+		String cardId = request.getParameter("cardId");
+		CreateQrCodeReq req = new CreateQrCodeReq();
+		req.setAction_name("QR_CARD");
+		req.setAction_info(CARDID);
+		if(StringUtils.isNotBlank(cardId)){
+			req.setAction_info(cardId);
+		}
+		System.out.println("--------------accessToken-----------"+accessToken);
+		return cardService.createWxQrCode(req, accessToken);
+	}
+	
+	public static void main(String args[]){
+		CreateQrCodeReq req = new CreateQrCodeReq();
+		req.setAction_name("QR_CARD");
+		req.setAction_info(CARDID);
+		System.out.println("------------------:"+JSONObject.toJSONString(req));
+	}
+	
+}

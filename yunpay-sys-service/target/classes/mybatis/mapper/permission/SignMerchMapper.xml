@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunpay.permission.dao.impl.SignMerchDaoImpl">
+	<!-- 查询的sql条件 -->
+	<sql id="tsys_area_code">TSYS_AREA_CODE</sql>
+	
+	<sql id="condition_sql">
+		<if test="proviceCode != null and proviceCode != ''"> and t.provice_code = #{proviceCode}</if>
+		<if test="regionCode != null and regionCode != ''"> and t.region_code = #{regionCode}</if>
+		<if test="date1 != null and date1 != ''"> and to_date(t.make_date,'yyyy-MM-dd') &gt;(to_date(#{date1},'yyyy-MM-dd')-1)</if>
+		<if test="date2 != null and date2 != ''"> and to_date(t.make_date,'yyyy-MM-dd') &lt;(to_date(#{date2},'yyyy-MM-dd')+1)</if>
+	</sql>
+	
+	<!-- 分页查询 -->
+	<select id="listPage" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.SignMerch">
+		select * from (select r.*,rownum rowno from (
+			 select t.make_date as makeDate,t.total_num as merTotalNum, t.provice_code as proviceCode,
+           tsc.areaname as provice, t.region_code as regionCode, tsc2.areaname as region, t.sign_num as merSignNum,
+           t.cancel_num as merCancelNum, t.store_sign_num as storeSignNum,t.store_cancel_num as storeCancelNum,
+           t.store_total_num as storeTotalNum,t.term_sign_num as termSignNum, t.term_cancel_num as termCancelNum,
+           t.term_total_num as termTotalNum, t.tran_num as sendNum,t.tran_amount as sendAmount, t.tran_merch_num as sendMerchNum,
+           t.tran_store_num as sendStoreNum, t.tran_term_num as sendTermNum,t.t_num as tranNum,t.t_amount as tranAmount,
+           t.u_term_num as useTermNum, t.t_merch_num as tranMerchNum,t.t_store_num as tranStoreNum,t.t_term_num as tranTermNum,
+           nvl(t.tran_num_recharge,0) as tranNumRecharge, nvl(t.tran_amount_recharge,0) as tranAmtRecharge from rpt_signmerch t
+           left join tsys_area_code tsc on tsc.areacode = t.provice_code 
+           left join tsys_area_code tsc2 on tsc2.areacode = t.region_code 
+           <where>
+           		<include refid="condition_sql"/>
+           </where> 
+           order by t.make_date desc) r) where rowno between #{startRowNum} and #{endRowNum}
+	</select>
+	
+	<select id="listPageCount" parameterType="java.util.Map" resultType="Long">
+		select count(1) from (
+			select t.make_date as makeDate,t.total_num as merTotalNum, t.provice_code as proviceCode,
+           tsc.areaname as provice, t.region_code as regionCode, tsc2.areaname as region, t.sign_num as merSignNum,
+           t.cancel_num as merCancelNum, t.store_sign_num as storeSignNum,t.store_cancel_num as storeCancelNum,
+           t.store_total_num as storeTotalNum,t.term_sign_num as termSignNum, t.term_cancel_num as termCancelNum,
+           t.term_total_num as termTotalNum, t.tran_num as sendNum,t.tran_amount as sendAmount, t.tran_merch_num as sendMerchNum,
+           t.tran_store_num as sendStoreNum, t.tran_term_num as sendTermNum,t.t_num as tranNum,t.t_amount as tranAmount,
+           t.u_term_num as useTermNum, t.t_merch_num as tranMerchNum,t.t_store_num as tranStoreNum,t.t_term_num as tranTermNum,
+           nvl(t.tran_num_recharge,0) as tranNumRecharge, nvl(t.tran_amount_recharge,0) as tranAmtRecharge from rpt_signmerch t
+           left join tsys_area_code tsc on tsc.areacode = t.provice_code 
+           left join tsys_area_code tsc2 on tsc2.areacode = t.region_code 
+           <where>
+           		<include refid="condition_sql"/>
+           </where> )
+	</select>
+	
+	<!-- 根据id查询 -->
+	<select id="getFeedBackById" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.FeedBack">
+		select ss.sss_id as sssId,ss.store_id as merchId, ss.quest_type as questType,ss.quest_desc as questDesc,ss.solve_desc as solveDesc,
+ 			 ss.solve_user as solveUser,ss.solve_time as solveTime,ss.solve_status as solveStatus,sm.register_name as merchName,
+ 			 sm.linkman1 as linkMan1,sm.linktel as linkTel from sd_store_solverecord ss left join sd_merch_base_info sm on ss.store_id = sm.merch_id
+		 where sss_id = #{sssId}
+	</select>
+	
+	<select id="SignMerchExport" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.SignMerch">
+		 select t.make_date as makeDate,t.total_num as merTotalNum,
+				t.provice_code as proviceCode, tsc.areaname as provice,
+				t.region_code as regionCode, tsc2.areaname as region,
+				t.sign_num as merSignNum,t.cancel_num as merCancelNum,
+				t.store_sign_num as storeSignNum,t.store_cancel_num as storeCancelNum,
+				t.store_total_num as storeTotalNum,t.term_sign_num as termSignNum,
+				t.term_cancel_num as termCancelNum,t.term_total_num as termTotalNum,
+				t.tran_num as sendNum,nvl(t.tran_amount, 0) as sendAmount,
+				t.tran_merch_num as sendMerchNum,t.tran_store_num as sendStoreNum,
+				t.tran_term_num as sendTermNum,t.t_num as tranNum,nvl(t.t_amount, 0) as tranAmount,t.u_term_num as useTermNum,
+				t.t_merch_num as tranMerchNum,t.t_store_num as tranStoreNum,t.t_term_num as tranTermNum,
+				nvl(t.tran_num_recharge,0) as tranNumRecharge, nvl(t.tran_amount_recharge,0) as tranAmtRecharge from rpt_signmerch t 
+				left join tsys_area_code tsc on tsc.areacode = t.provice_code 
+				left join tsys_area_code tsc2 on tsc2.areacode = t.region_code
+	</select>
+	
+	<!-- 合计 -->
+	<select id="totalSignMerch" parameterType="com.yunpay.permission.entity.TotalCount" resultType="com.yunpay.permission.entity.TotalCount">
+		select sum(merSignNum) as sumTotal1,sum(merCancelNum) as sumTotal2,sum(merTotalNum) as sumTotal3,
+			sum(storeSignNum) as sumTotal4,sum(storeCancelNum) as sumTotal5,sum(storeTotalNum) as sumTotal6,
+			sum(termSignNum) as sumTotal7,sum(termCancelNum) as sumTotal8,sum(termTotalNum) as sumTotal9,
+			sum(tranNum) as sumTotal10,sum(tranAmount) as sumTotal11,sum(sendNum) as sumTotal12,
+			sum(sendAmount) as sumTotal13,sum(tranNumRecharge) as sumTotal14,sum(tranAmtRecharge) as sumTotal15 from (
+		select t.make_date as makeDate,t.total_num as merTotalNum, t.provice_code as proviceCode,
+           tsc.areaname as provice, t.region_code as regionCode, tsc2.areaname as region, t.sign_num as merSignNum,
+           t.cancel_num as merCancelNum, t.store_sign_num as storeSignNum,t.store_cancel_num as storeCancelNum,
+           t.store_total_num as storeTotalNum,t.term_sign_num as termSignNum, t.term_cancel_num as termCancelNum,
+           t.term_total_num as termTotalNum, t.tran_num as sendNum,t.tran_amount as sendAmount, t.tran_merch_num as sendMerchNum,
+           t.tran_store_num as sendStoreNum, t.tran_term_num as sendTermNum,t.t_num as tranNum,t.t_amount as tranAmount,
+           t.u_term_num as useTermNum, t.t_merch_num as tranMerchNum,t.t_store_num as tranStoreNum,t.t_term_num as tranTermNum,
+           nvl(t.tran_num_recharge,0) as tranNumRecharge, nvl(t.tran_amount_recharge,0) as tranAmtRecharge from rpt_signmerch t
+           left join tsys_area_code tsc on tsc.areacode = t.provice_code 
+           left join tsys_area_code tsc2 on tsc2.areacode = t.region_code 
+           <where>
+           		<include refid="condition_sql"/>
+           </where>)
+	</select>
+	
+</mapper>

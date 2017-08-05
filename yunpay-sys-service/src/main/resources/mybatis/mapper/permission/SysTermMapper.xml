@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunpay.permission.dao.impl.SysTermDaoImpl">
+
+	<sql id="sd_merch_term"> SD_MERCH_TERM </sql>
+	
+	<resultMap id="beanMap" type="com.yunpay.permission.entity.TermEntity">
+	    <id column="seqId"              property="seqId"            jdbcType="INTEGER" />
+        <result column="termId"         property="termId"           jdbcType="VARCHAR" />
+        <result column="termSeq"        property="termSeq"          jdbcType="VARCHAR" />
+        <result column="merchId"        property="merchId"          jdbcType="VARCHAR" />
+        <result column="storeNo"        property="storeNo"          jdbcType="VARCHAR" />
+        <result column="status"         property="status"           jdbcType="VARCHAR" />
+        <result column="setPerson"      property="setPerson"        jdbcType="VARCHAR" />
+        <result column="posRent"        property="posRent"          jdbcType="VARCHAR" />
+        <result column="posDeposit"     property="posDeposit"       jdbcType="VARCHAR" />
+        <result column="setDate"        property="setDate"          jdbcType="VARCHAR" />
+        <result column="createUser"     property="createUser"       jdbcType="VARCHAR" />
+        <result column="storageFlag"    property="storageFlag"      jdbcType="VARCHAR" />
+        <result column="createDate"     property="createDate"       jdbcType="VARCHAR" />
+        <result column="gprsNo"         property="gprsNo"           jdbcType="VARCHAR" />
+        <result column="channelNo"      property="channelNo"        jdbcType="VARCHAR" />
+        <result column="isPwdKey"       property="isPwdKey"         jdbcType="VARCHAR" />
+        <result column="isReadCard"     property="isReadCard"       jdbcType="VARCHAR" />
+        
+        <result column="merchName"      property="merchName"        jdbcType="VARCHAR" />
+        <result column="storeName"      property="storeName"        jdbcType="VARCHAR" />
+        <result column="firm"           property="firm"             jdbcType="VARCHAR" />
+        <result column="setPersonName"  property="setPersonName"    jdbcType="VARCHAR" />
+        <result column="transferType"   property="transferType"     jdbcType="VARCHAR" />
+        <result column="pwdKeyboard"    property="pwdKeyboard"      jdbcType="VARCHAR" />
+        <result column="termAppSeq"     property="termAppSeq"       jdbcType="VARCHAR" />
+        
+        <result column="appCode"        property="appCode"       jdbcType="VARCHAR" />
+        <result column="appName"        property="appName"       jdbcType="VARCHAR" />
+        <result column="appTermSeq"     property="appTermSeq"       jdbcType="VARCHAR" />
+        <result column="appVersion"     property="appVersion"       jdbcType="VARCHAR" />
+        <result column="appTermNo"      property="appTermNo"       jdbcType="VARCHAR" />
+        <result column="appTermPwd"     property="appTermPwd"       jdbcType="VARCHAR" />
+        <result column="termAppId"      property="termAppId"       jdbcType="VARCHAR" />
+        <result column="appSamCard"     property="appSamCard"       jdbcType="VARCHAR" />
+        
+        <!-- 
+        <result column="readCardNo"     property="readCardNo"       jdbcType="VARCHAR" />
+        <result column="updateDate"     property="updateDate"       jdbcType="VARCHAR" />
+        <result column="remark"         property="remark"       jdbcType="VARCHAR" />
+        <result column="typeId"         property="typeId"       jdbcType="VARCHAR" />
+        <result column="updateUser"     property="updateUser"       jdbcType="VARCHAR" />
+         -->
+    </resultMap>
+    <!-- 现在用到的 -->
+    <!-- 统计条数 -->
+    <select id="listPageCount" parameterType="java.util.Map" resultType="long">
+        select count(1) from (select * from <include refid="sd_merch_term" /> order by create_date desc) smt
+		    left join sd_merch_base_info smbi on smbi.merch_id = smt.merch_id
+		    left join sd_firm sf on sf.firm_code = smt.firm
+		    left join tsys_employee te on te.empno = smt.set_person
+		    left join sd_store ss on ss.store_id = smt.store_id
+		    left join sd_type_info sti on sti.type_code = smt.transfer_type and sti.type_id = '0003'
+		    left join sd_term_app sta on sta.term_seq = smt.term_seq and sta.app_code = '01' and sta.status = '01'
+		    left join sd_term_app sta2 on sta2.term_seq = smt.term_seq and sta2.app_code = '02' and sta2.status = '01'
+		    <where>
+                <include refid="factor_sql" />
+            </where>
+    </select>
+    
+    <!-- 分页 -->
+    <select id="listPage" parameterType="java.util.Map" resultMap="beanMap">
+	select * from (
+	    select trem.*,rownum rowno from
+	    (select smt.seq_id as seqId,smt.term_id as termId,smt.term_seq as
+		    termSeq,smbi.name_short as merchName,smt.merch_id as
+		    merchId,smt.store_id as storeNo,
+		    ss.store_name as storeName,smt.status,sf.firm_name as firm,null as typeId,te.empname as setPersonName,smt.set_person as setPerson,smt.pos_rent as posRent,
+		    smt.pos_deposit as posDeposit,smt.set_date as setDate,null as remark,smt.create_user as createUser,smt.storage_flag as storageFlag,smt.create_date as createDate,
+		    null as updateUser, null as updateDate, smt.gprs_no as gprsNo, smt.channel_no as channelNo, sti.type_name as transferType, smt.is_pwdkey as isPwdKey,
+		    sta.app_samcard as pwdKeyboard, smt.is_readcard as isReadCard, null as readCardNo, sta2.app_term_seq as termAppSeq
+		    from (select * from <include refid="sd_merch_term" /> order by create_date desc) smt
+		    left join sd_merch_base_info smbi on smbi.merch_id = smt.merch_id
+		    left join sd_firm sf on sf.firm_code = smt.firm
+		    left join tsys_employee te on te.empno = smt.set_person
+		    left join sd_store ss on ss.store_id = smt.store_id
+		    left join sd_type_info sti on sti.type_code = smt.transfer_type and sti.type_id = '0003'
+		    left join sd_term_app sta on sta.term_seq = smt.term_seq and sta.app_code = '01' and sta.status = '01'
+		    left join sd_term_app sta2 on sta2.term_seq = smt.term_seq and sta2.app_code = '02' and sta2.status = '01'
+		    <where>
+	            <include refid="factor_sql" />
+	        </where>
+		    )trem ) 
+		where rowno between #{startRowNum} and #{endRowNum}
+    order by rowno
+    </select>
+    
+    <insert id="addTerm" parameterType="com.yunpay.permission.entity.TermEntity">
+		insert into <include refid="sd_merch_term" />
+			(term_id,merch_id,status,firm,type_id,set_person,pos_rent,pos_deposit,
+			store_id,set_date,term_seq,remark,create_user,storage_flag,create_date,gprs_no,transfer_type,
+			is_pwdkey,pwd_keyboard,is_readcard,read_cardno,seq_id,channel_no,term_flag) 
+			values
+			(#{termId,jdbcType=VARCHAR},#{merchId,jdbcType=VARCHAR},#{status,jdbcType=VARCHAR},#{firm,jdbcType=VARCHAR},#{typeId,jdbcType=VARCHAR},#{setPerson,jdbcType=VARCHAR},
+			#{posRent,jdbcType=VARCHAR},#{posDeposit,jdbcType=VARCHAR},#{storeNo,jdbcType=VARCHAR},#{setDate,jdbcType=VARCHAR},#{termSeq,jdbcType=VARCHAR},#{remark,jdbcType=VARCHAR},
+			#{createUser,jdbcType=VARCHAR},#{storageFlag,jdbcType=VARCHAR},#{createtime,jdbcType=VARCHAR},#{gprsNo,jdbcType=VARCHAR},#{transferType,jdbcType=VARCHAR},#{isPwdkey,jdbcType=VARCHAR},
+			#{pwdKeyboard,jdbcType=VARCHAR},#{isReadcard,jdbcType=VARCHAR},#{readCardno,jdbcType=VARCHAR},#{seqId,jdbcType=VARCHAR},#{channelNo,jdbcType=VARCHAR},#{termFlag,jdbcType=VARCHAR})
+    </insert>
+    
+    <update id="editTerm" parameterType="com.yunpay.permission.entity.TermEntity">
+        update <include refid="sd_merch_term" /> set firm=#{firm,jdbcType=VARCHAR},type_id=#{typeId,jdbcType=VARCHAR},transfer_type=#{transferType,jdbcType=VARCHAR},gprs_no=#{gprsNo,jdbcType=VARCHAR},
+            remark=#{remark,jdbcType=VARCHAR},update_user=#{createUser,jdbcType=VARCHAR},update_date=#{createtime,jdbcType=VARCHAR} where term_seq=#{termSeq}
+            <!-- 
+        update sd_merch_term set merch_id=#{merchId,jdbcType=VARCHAR},firm=#{firm,jdbcType=VARCHAR},type_id=#{typeId,jdbcType=VARCHAR},set_person=#{setPerson,jdbcType=VARCHAR},
+            pos_rent=#{posRent,jdbcType=VARCHAR},pos_deposit=#{posDeposit,jdbcType=VARCHAR},store_id=#{storeNo,jdbcType=VARCHAR},set_date=#{setDate,jdbcType=VARCHAR},
+            term_seq=#{termSeq,jdbcType=VARCHAR},remark=#{remark,jdbcType=VARCHAR},update_user=#{createUser,jdbcType=VARCHAR},update_date=#{createtime,jdbcType=VARCHAR},
+            gprs_no=#{gprsNo,jdbcType=VARCHAR},transfer_type=#{transferType,jdbcType=VARCHAR},is_pwdkey=#{isPwdkey,jdbcType=VARCHAR},pwd_keyboard=#{pwdKeyboard,jdbcType=VARCHAR},
+            is_readcard=#{isReadcard,jdbcType=VARCHAR},read_cardno=#{readCardno,jdbcType=VARCHAR},term_id=#{termId,jdbcType=VARCHAR} where term_seq=#{termSeq}
+             -->
+    </update>
+    
+    <!-- 校验物理终端是否唯一 -->
+    <select id="checkTermSeq" resultMap="beanMap">
+        select * from <include refid="sd_merch_term" /> where term_seq= #{termSeq }
+    </select>
+    
+    <select id="findTermApp" resultMap="beanMap">
+        select smt.term_Id as termId,sa.app_code as appCode,sa.app_name as appName,sa.app_version as appVersion, 
+             sta.term_seq as termSeq,sta.app_termno as appTermNo,sta.app_termpwd as appTermPwd,sta.status as status,
+             sta.term_app_id as termAppId,sta.app_samcard as appSamCard,
+             smt.merch_id as merchId,sta.app_term_seq as termAppSeq from sd_appinfo sa 
+             left join sd_term_app sta on sta.app_code = sa.app_code and sta.term_seq=#{termSeq } 
+             left join <include refid="sd_merch_term" /> smt on smt.term_seq = sta.term_seq 
+             where sa.app_status='01' and sa.issuer_id in 
+             (select issuer_id from sd_issuer_relation t right join <include refid="sd_merch_term" /> tsmt on t.bd_id=tsmt.merch_id where tsmt.term_seq=#{termSeq }) 
+             order by sa.app_code 
+    </select>
+    
+    <!-- 查询绑定应用 -->
+    <select id="queTermAppInfo" resultMap="beanMap">
+        select app_termno as appTermNo from sd_term_app where term_app_id=#{TermAppId }
+    </select>
+    
+    <!-- 查询长沙移动签到表记录 -->
+    <select id="queAppTermSeq" resultMap="beanMap">
+        select app_term_seq appTermSeq,app_code appCode from sd_term_app where term_app_id=#{termAppId }
+    </select>
+    
+    <!-- 删除绑定应用 -->
+    <delete id="delTermAppInfo">
+        delete from sd_term_app where term_app_id=#{TermAppId }
+    </delete>
+    
+    <!-- 长沙移动终端删除绑定 -->
+    <delete id="delBATCHMANAGEMENT">
+        delete from SD_BATCHMANAGEMENT_INFO where term_id=#{AppTermSeq }
+    </delete>
+    
+    <!-- 根据termAppId查询数据 -->
+    <select id="queTermAppInfoById" resultMap="beanMap">
+        select Term_Seq termSeq,app_code appCode,app_TermNo appTermNo,app_SamCard appSamCard,app_Term_Seq appTermSeq from sd_term_app where term_app_id=#{TermAppId }
+    </select>
+    
+    <!-- 判断终端信息是否已存在 -->
+    <select id="validApp" parameterType="java.util.Map" resultMap="beanMap">
+        select Term_Seq termSeq from sd_term_app where app_termno=#{appTermNo } and app_code = #{appCode} and app_samcard=#{appSamcard } 
+            <if test="appTermSeq != null and appTermSeq != ''">and app_term_seq=#{appTermSeq }</if>
+    </select>
+    
+    <!-- 判断应用终端号是否已存在 -->
+    <select id="validAppTerm" parameterType="java.util.Map" resultMap="beanMap">
+        select Term_Seq termSeq from sd_term_app where app_termno=#{appTermNo } and app_code = #{appCode}
+    </select>
+    
+    <!-- 判断终端SAM卡号是否已存在 -->
+    <select id="validAppSamCard" resultMap="beanMap">
+        select Term_Seq termSeq from sd_term_app where app_samcard=#{AppSamCard }
+    </select>
+    
+    <!-- 判断终端应用序列是否已存在 -->
+    <select id="validTermAppSeq" resultMap="beanMap">
+        select Term_Seq termSeq from sd_term_app where app_term_seq=#{AppTermSeq }
+    </select>
+    
+    <!-- 绑定应用 -->
+    <insert id="addtermapp">
+        insert into sd_term_app (term_app_id,term_seq,app_code,app_term_seq,app_termno,status,app_samcard) values 
+            (seq_term_app_id.nextval,#{termSeq },#{appCode },#{appTermSeq },#{appTermNo },#{status },#{appSamcard })
+    </insert>
+    
+    <select id="findTermAppInfo">
+        select t.term_id as termId,t.merch_id as merchId,s.issuer_merch_id as issuerMerchId from <include refid="sd_merch_term" /> t 
+            left join sd_issuer_relation s on t.merch_id=s.BD_ID and s.issuer_id='10000001' where term_seq=#{termSeq }
+    </select>
+    
+    <!-- 长沙移动终端添加绑定 -->
+    <insert id="addBATCHMANAGEMENTInfo" parameterType="java.util.Map">
+        insert into SD_BATCHMANAGEMENT_INFO(organ_no,term_date,term_id,term_no,merch_id,lmk_tak,lmk_tpk,batch_no,
+            aid,app_version,parameter_version,oper_id,pos_term_id,pos_merch_id,kek)
+            values(seq_sd_batchmanagement_info.nextval,#{termDate },#{termId },#{termNo },#{merchId },#{lmkTak },#{lmkTpk },#{batchNo },
+            #{aid },#{appVersion },#{parameterVersion },#{operId },#{posTermId },#{posMerchId },'')
+    </insert>
+    
+    <!-- 修改应用 -->
+    <update id="edittermapp">
+        update sd_term_app set app_term_seq=#{appTermSeq },app_termno=#{appTermNo },app_samcard=#{appSamcard } where term_app_id=#{termAppId }
+    </update>
+    
+    <!-- 添加秘钥 -->
+    <select id="addTermAppKeyInfo" parameterType="java.util.Map">
+        insert into sd_term_key (term_id ,merch_id ,oper_id,lmk_tmk ,zmk_tmk ,tmk_check_value , lmk_tpk ,lmk_tak ,tmk_tpk ,tmk_tak , batch_no ,update_time,app_code) values 
+        (#{termId },#{merchId },#{operId },#{lmkTmk },#{zmkTmk },#{tmkCheckValue },#{lmkTpk },#{lmkTak },#{tmkTpk },#{tmkTak },#{batchNo },#{updateTime },#{appCode }) 
+    </select>
+    
+    <!-- 修改秘钥 -->
+    <select id="editTermAppKeyInfo" parameterType="java.util.Map">
+        update sd_term_key set merch_id=#{merchId },oper_id=#{operId },lmk_tmk=#{lmkTmk },zmk_tmk=#{zmkTmk },tmk_check_value=#{tmkCheckValue },lmk_tpk=#{lmkTpk },
+            lmk_tak=#{lmkTak },tmk_tpk=#{tmkTpk },tmk_tak=#{tmkTak },batch_no=#{batchNo },update_time=#{updateTime } where app_code=#{appCode } and term_id=#{termId }
+    </select>
+    
+    <!-- 删除秘钥 -->
+    <select id="delTermAppKeyInfo" parameterType="java.util.Map">
+        delete from sd_term_key where term_id=#{termId } and app_code=#{appCode }
+    </select>
+    
+    <!-- 根据TermId删除秘钥 -->
+    <select id="delTermAppKeyInfoBytermId" parameterType="java.util.Map">
+        delete from sd_term_key where term_id=#{termId }
+    </select>
+    
+    <!-- 获取TermId -->
+    <select id="findTermId" resultMap="beanMap">
+        select max(term_id)+1 as termId from <include refid="sd_merch_term" /> where substr(term_id,0,4) = #{prefix}
+    </select>
+    
+    <!-- 根据seq获取TermId -->
+    <select id="findTermIdbySeq" resultMap="beanMap">
+        select term_id as termId,merch_id as merchId from <include refid="sd_merch_term" /> where term_seq=#{termSeq}
+    </select>
+    
+    <!-- 根据TermId 和 termSeq 获取秘钥信息 -->
+    <select id="getTermKey" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.TermAppEntity">
+	select sdk.zmk_tmk bestPayZmkTmk ,sk.term_id as termId,sk.merch_id as merchId,sk.oper_id as operId, sk.lmk_tmk as lmkTmk,sk.zmk_tmk as zmkTmk,
+		sk.tmk_check_value as tmkCheckValue, sk.lmk_tpk as lmkTpk,sk.lmk_tak as lmkTak,sk.tmk_tpk as tmkTpk,sk.tmk_tak as tmkTak,
+		sk.batch_no as batchNo,sk.update_time as updateTime,sk.app_code as appCode 
+		from sd_term_key sk 
+		left join sd_term_third_party_key sdk on sdk.app_code = sk.app_code 
+		where term_id=#{termId } and sk.app_code=#{appCode }
+    </select>
+    
+    <!-- 厂商下拉 -->
+    <select id="findfirm" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.ComboxValue">
+        select firm_code as code,firm_name as name from sd_firm where status='01' order by orderno asc
+    </select>
+    
+    <!-- 型号下拉 -->
+    <select id="findtypeId" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.ComboxValue">
+        select type_code as code,type_name as name from sd_term_type where status='01' and firm_code=#{firmCode} order by orderno asc
+    </select>
+    
+    <!-- 通讯方式下拉 -->
+    <select id="findtransferType" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.ComboxValue">
+        select type_code as code,type_name as name from sd_type_info where type_id='0003' order by order_no
+    </select>
+    
+    <sql id="factor_sql">
+        <!-- 动态语句 -->
+        term_flag = '1'
+        <if test="merchName != null and merchName != ''"> and smbi.name_short   like CONCAT(CONCAT('%', #{merchName}), '%')</if>
+        <if test="storeName != null and storeName != ''"> and ss.store_name     like CONCAT(CONCAT('%', #{storeName}), '%')</if>
+        <if test="termSeq   != null and termSeq != ''">   and smt.term_seq      like CONCAT(CONCAT('%', #{termSeq}), '%')</if>
+        <if test="termId    != null and termId != ''">    and smt.term_id       like CONCAT(CONCAT('%', #{termId}), '%')</if>
+        <if test="pwdKeyboard != null and pwdKeyboard != ''">and sta.app_samcard = #{pwdKeyboard}</if>
+    </sql>
+    
+    <!-- 修改状态码 -->
+    <update id="editTermStatus" parameterType="java.util.Map" >
+        update
+        <include refid="sd_merch_term" />
+        <set>
+            <if test="status != null and status != ''">
+                status = #{status}
+            </if>
+        </set>
+        where term_seq = #{termSeq }
+    </update>
+    
+    <!-- 修改sd_term_license状态码 -->
+    <update id="editTermliStatus" parameterType="java.util.Map" >
+        update sd_term_license sl set sl.key_status=#{KeyStatus } where term_seq= #{termSeq }
+    </update>
+    
+    <!-- 根据merchId查询 -->
+    <select id="selectByPrimaryKey" parameterType="java.util.Map" resultMap="beanMap">
+        select smt.seq_id as seqId,smt.term_id as termId,smt.term_seq as termSeq,
+            smbi.name_short as merchName,smt.merch_id as merchId,smt.store_id as storeNo,
+            ss.store_name as storeName,smt.status,smt.firm as firm,smt.type_Id as typeId,te.empname
+            as setPersonName,smt.set_person as setPerson,smt.pos_rent as posRent,
+            smt.pos_deposit as posDeposit,smt.set_date as setDate,smt.remark as remark,smt.create_user as createUser,
+            smt.storage_flag as storageFlag,smt.create_date as createDate, smt.update_User as updateUser, smt.update_Date as updateDate,
+            smt.gprs_no as gprsNo, smt.channel_no as channelNo, smt.transfer_type as transferType, smt.is_pwdkey as isPwdKey, sta.app_samcard as pwdKeyboard,
+            smt.is_readcard as isReadCard, smt.read_CardNo as readCardNo, sta2.app_term_seq as termAppSeq from 
+        <include refid="sd_merch_term" /> smt
+            left join sd_merch_base_info smbi on smbi.merch_id = smt.merch_id
+            left join sd_firm sf on sf.firm_code = smt.firm
+            left join tsys_employee te on te.empno = smt.set_person
+            left join sd_store ss on ss.store_id = smt.store_id
+            left join sd_type_info sti on sti.type_code = smt.transfer_type
+            and sti.type_id = '0003'
+            left join sd_term_app sta on sta.term_seq = smt.term_seq
+            and sta.app_code = '01'
+            and sta.status = '01'
+            left join sd_term_app sta2 on sta2.term_seq = smt.term_seq
+            and sta2.app_code = '02'
+            and sta2.status = '01'
+        <where>
+            smt.term_id = #{termId }
+        </where>
+    </select>
+    
+    <!-- 根据merchId删除 -->
+    <delete id="deleteByPrimaryKey">
+        delete from <include refid="sd_merch_term" /> where term_id = #{termId }
+    </delete>
+    
+    <!-- 删除长沙移动签到表 -->
+    <delete id="delSign" parameterType="java.util.Map">
+        delete from sd_batchmanagement_info where pos_merch_id=#{merchId } and pos_term_id=#{termId }
+    </delete>
+    
+    <!-- 删除注册码表-->
+    <delete id="delCode">
+        delete from sd_term_license where term_seq= #{termSeq }
+    </delete>
+    
+    <delete id="deleteTermApp">
+        delete from sd_term_app where term_seq=#{termSeq }
+    </delete>
+    
+    <delete id="deleteTermKey">
+        delete from sd_term_key where term_id=#{termId }
+    </delete>
+    
+    <update id="updateMachineInfo" parameterType="java.util.Map">
+        update sd_machine_info set mac_status=#{macStatus } where term_seq=#{termSeq }
+    </update>
+    
+    <insert id="insertTermLs" parameterType="java.util.Map">
+        insert into sd_merch_term_ls (flow_id,term_id,merch_id,status,firm,type_id,set_person,pos_rent,pos_deposit,
+            store_id,set_date,term_seq,remark,opr_user,storage_flag,opr_date,gprs_no,transfer_type, 
+            is_pwdkey,pwd_keyboard,is_readcard,read_cardno,seq_id,dealtype,dealresult) values 
+            (seq_merch_term_ls_id.nextval,#{termId,jdbcType=VARCHAR},#{merchId,jdbcType=VARCHAR},#{status,jdbcType=VARCHAR},#{firm,jdbcType=VARCHAR},
+            #{typeId,jdbcType=VARCHAR},#{setPerson,jdbcType=VARCHAR},#{posRent,jdbcType=VARCHAR},#{posDeposit,jdbcType=VARCHAR},#{storeNo,jdbcType=VARCHAR},
+            #{setDate,jdbcType=VARCHAR},#{termSeq,jdbcType=VARCHAR},#{remark,jdbcType=VARCHAR},#{oprUser,jdbcType=VARCHAR},#{storageFlag,jdbcType=VARCHAR},
+            #{oprDate,jdbcType=VARCHAR},#{gprsNo,jdbcType=VARCHAR},#{transferType,jdbcType=VARCHAR},#{isPwdkey,jdbcType=VARCHAR},#{pwdKeyboard,jdbcType=VARCHAR},
+            #{isReadcard,jdbcType=VARCHAR},#{readCardno,jdbcType=VARCHAR},#{seqId,jdbcType=VARCHAR},#{dealType,jdbcType=VARCHAR},'1')
+    </insert>
+    
+    
+    
+    <insert id="addtermMonitor" parameterType="java.util.Map">
+        insert into sd_term_monitor (stm_id,merch_id,store_id,term_id,term_seq,msg_type,msg_context,send_time,msg_remark)
+            values (seq_stm_id.nextval,#{merchId},#{storeNo},#{termId},#{termSeq},#{msgType},#{msgContext},sysdate,#{msgRemark})
+    </insert>
+    
+    <select id="queryMerchSettle" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.bill_id as billId,t.merch_id as merchId,t.tran_amt as tranAmt,t.tran_num as tranNum,t.in_fee as inFee,t.out_fee as outFee,t.out_amt as outAmt,
+            t.in_amt as inAmt, t.create_time as billDate,t.set_begindate as setBeginDate,t.set_enddate as setEndDate,t.bill_status as billStatus
+            from v_set_merch_bill t 
+            where t.tran_num>0 
+            <if test="merchId != null and merchId != ''"> and t.merch_id = #{merchId} </if>
+            <if test="beginDate != null and beginDate != ''"> and to_date(t.create_time, 'yyyy-mm-dd hh24:mi:ss')&gt;to_date(#{beginDate},'yyyy-mm-dd')-1 </if>
+            <if test="endDate != null and endDate != ''"> and to_date(t.create_time, 'yyyy-mm-dd hh24:mi:ss')&lt;to_date(#{endDate},'yyyy-mm-dd')+1 </if>
+    </select>
+    
+    <select id="queryMerchValidErrNum" parameterType="java.util.Map" resultType="long">
+        select count(0)  from sd_merch_valid_list where term_seq=#{termSeq} and valid_date=#{validDate} and valid_status='0'
+    </select>
+    
+    <select id="getMerchInfo" resultType="com.yunpay.permission.entity.MerchantInfo">
+        select t1.merch_id as merchId,register_name as registerName,merchaddr as merchAddr,nvl(t2.current_amt,0) as merchAmount,linkman1,linktel as linktal,
+            account_name as accountName,account_no as accountNo,account_bank as accountBank 
+            from sd_merch_base_info t1 
+            left join sd_merch_redit_amt t2 on t2.merch_id = t1.merch_id 
+            where t1.merch_id=#{merchId}
+    </select>
+    
+    <insert id="addMerchValid" parameterType="java.util.Map">
+        insert into sd_merch_valid_list (valid_seq,merch_id,term_seq,valid_status,valid_date) 
+            values 
+            (seq_merch_valid_list.nextval,#{merchId},#{termSeq},#{validStatus},#{validDate})
+    </insert>
+    
+</mapper>

@@ -1,0 +1,6 @@
+package com.yunpay.serv.service.card;
+public interface CardTemplateService {
+	
+	public String recvAccessToken(String appId,String appSecret);
+	
+}

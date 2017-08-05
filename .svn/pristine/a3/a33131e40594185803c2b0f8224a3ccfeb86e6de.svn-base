@@ -1,0 +1,76 @@
+package com.yunpay.serv.service.card;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+
+import com.yunpay.common.exception.YunPayException;
+import com.yunpay.common.utils.EnumUtil.ResultCode;
+import com.yunpay.serv.rep.Message;
+import com.yunpay.wx.rep.card.AccessTokenRep;
+import com.yunpay.wx.rep.card.UploadImgRep;
+import com.yunpay.wx.req.card.CardReq;
+import com.yunpay.wx.req.card.CreateQrCodeReq;
+import com.yunpay.wx.service.WechatCardService;
+
+
+public abstract class CardService {
+	
+	@Autowired
+	private WechatCardService wechatCardService;
+	
+	/**
+	 * @Description:获取微信access_token 
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年8月1日上午11:12:09 
+	 * @param appId
+	 * @param appSecret
+	 * @return
+	 * @throws YunPayException
+	 */
+	@Cacheable(value="wxAccessToken",key="#appId")
+	public String recvAccessToken(String appId,String appSecret) throws YunPayException{
+		AccessTokenRep accessTokenRep = wechatCardService.doAccessToken(appId, appSecret);
+		if(ResultCode.SUCCESS.getCode().equals(accessTokenRep.getReturn_code())){
+			return accessTokenRep.getAccess_token();
+		}
+		throw new YunPayException(accessTokenRep.getErr_code_des());
+	}
+	
+	/**
+	 * @Description: 上传卡券logo
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年8月1日上午11:12:26 
+	 * @param imgUrl
+	 * @param accessToken
+	 * @return
+	 * @throws YunPayException
+	 */
+	public String uploadWxImg(String imgUrl,String accessToken) throws YunPayException{
+		UploadImgRep rep = wechatCardService.doUploadImg(imgUrl, accessToken);
+		if(ResultCode.SUCCESS.getCode().equals(rep.getReturn_code())){
+			return rep.getUrl();
+		}
+		throw new YunPayException(rep.getErr_code_des());
+	}
+	
+	/**
+	 * @Description: 创建微信卡券
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年8月2日下午2:51:02 
+	 * @param req
+	 * @param accessToken
+	 * @return
+	 */
+	public abstract Message createWxCard(CardReq req,String accessToken);
+	
+	/**
+	 * @Description: 创建卡券领取码
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年8月2日下午2:51:12 
+	 * @param req
+	 * @param accessToken
+	 * @return
+	 */
+	public abstract Message createWxQrCode(CreateQrCodeReq req,String accessToken);
+	
+}

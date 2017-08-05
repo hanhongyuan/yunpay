@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunpay.permission.dao.impl.SysUserDaoImpl">
+
+	<!-- Sys权限管理：操作员表 -->
+	<sql id="t_sys_user"> T_SYS_USER </sql>
+	<sql id="t_sys_role_user"> T_SYS_USER_ROLE </sql>
+
+	<resultMap id="beanMap" type="com.yunpay.permission.entity.SysUser">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="version" property="version" jdbcType="INTEGER" />
+		<result column="status" property="status" jdbcType="VARCHAR" />
+		<result column="creater" property="creater" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="editor" property="editor" jdbcType="VARCHAR" />
+		<result column="edit_time" property="editTime" jdbcType="TIMESTAMP" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+		<result column="login_name" property="loginName" jdbcType="VARCHAR" />
+		<result column="login_pwd" property="loginPwd" jdbcType="VARCHAR" />
+		<result column="real_name" property="realName" jdbcType="VARCHAR" />
+		<result column="mobile_no" property="mobileNo" jdbcType="VARCHAR"  />
+		<result column="type" property="type" jdbcType="VARCHAR"  />
+		<result column="salt" property="salt" jdbcType="VARCHAR"  />
+		<result column="parent_id" property="parentId" jdbcType="VARCHAR"  />
+	</resultMap>
+
+	<insert id="insert" parameterType="com.yunpay.permission.entity.SysUser" >
+		insert into
+		<include refid="t_sys_user" />
+		(id,version,status,creater,create_time, editor, edit_time, remark, login_name, login_pwd,real_name,mobile_no,type,salt,parent_id,branchname)
+		values
+		(seq_t_sys_user.nextval,0,#{status}, #{creater},#{createTime}, #{editor},#{editTime},#{remark},#{loginName},
+		#{loginPwd},#{realName},#{mobileNo},#{type},#{salt},#{parentId},#{branchName})
+	</insert>
+
+	<update id="update" parameterType="com.yunpay.permission.entity.SysUser">
+		update
+		<include refid="t_sys_user" />
+		<set>
+		version = #{version}+1,
+		creater = #{creater,jdbcType=VARCHAR},
+		create_time = #{createTime,jdbcType=TIMESTAMP},
+		editor = #{editor,jdbcType=VARCHAR},
+		edit_time = #{editTime,jdbcType=TIMESTAMP},
+		remark = #{remark,jdbcType=VARCHAR},
+		status = #{status,jdbcType=VARCHAR},
+		login_name = #{loginName,jdbcType=VARCHAR},
+		login_pwd = #{loginPwd,jdbcType=VARCHAR},
+		real_name = #{realName,jdbcType=VARCHAR},
+		type = #{type,jdbcType=VARCHAR},
+		salt = #{salt,jdbcType=VARCHAR},
+		mobile_no = #{mobileNo,jdbcType=VARCHAR}	
+		</set>
+		<where>
+			id = #{id} and version = #{version}
+		</where>
+	</update>
+
+	<!-- 修改密码 -->
+	<update id="updatePwd" parameterType="com.yunpay.permission.entity.SysUser">
+		update
+		<include refid="t_sys_user" />
+		<set>
+			<if test="loginPwd != null and loginPwd != ''">
+				login_pwd = #{loginPwd},
+			</if>
+			<if test="salt != null and salt != ''">
+				salt = #{salt}
+			</if>
+		</set>
+		<where>
+			id = #{id}
+		</where> 
+	</update>
+
+	<select id="selectByPrimaryKey" parameterType="Long" resultMap="beanMap">
+		select * from
+		<include refid="t_sys_user" />
+		where ID = #{id}
+	</select>
+
+	<!-- 查询当前插入的操作员信息 -->
+	<select id="queryUser" parameterType="Long" resultMap="beanMap">
+		select * from
+		<include refid="t_sys_user" />
+		<where>
+			id =(select max(id) from <include refid="t_sys_user" />)
+		</where>
+	</select>
+
+	<!-- 查询所有的操作员 -->
+	<select id="listAllSysUser" parameterType="Long" resultMap="beanMap">
+		select * from
+		<include refid="t_sys_user" />
+	</select>
+
+	<select id="findByLoginName" parameterType="string" resultMap="beanMap">
+		select * from
+		<include refid="t_sys_user" />
+		where login_name = #{loginName}
+	</select>
+
+	<select id="listAll" resultMap="beanMap">
+		select * from
+		<include refid="t_sys_user" />
+		order by ID
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="Long">
+		delete from
+		<include refid="t_sys_user" />
+		where ID = #{id}
+	</delete>
+
+	<sql id="condition_sql">
+		<!-- Equal query -->
+		<if test="loginName != null and loginName != ''"> and login_name = #{loginName}</if>
+		<if test="status != null and status != ''"> and status = #{status}</if>
+		<if test="type != null and type != ''"> and type = #{type}</if>
+		<!-- Like query -->
+		<if test="realName != null and realName != ''"> and REAL_NAME like CONCAT(CONCAT('%', #{realName}), '%')</if>
+	</sql>
+
+	<!-- <select id="listPage" parameterType="java.util.Map" resultMap="beanMap">
+		select * from (
+			select o.* ,rownum rowno from
+		<include refid="t_sys_user" /> o
+		<where>
+			<include refid="condition_sql" />
+		</where>
+		) where rowno between #{startRowNum} and #{endRowNum}
+		order by id desc
+
+	</select> -->
+	
+	
+	<select id="listPage" parameterType="java.util.Map" resultMap="beanMap">
+		select o.* from  
+		<include refid="t_sys_user" /> o 
+		limit 0,15;		
+	</select>
+
+	<select id="listPageCount" parameterType="java.util.Map" resultType="int">
+		select count(1) from
+		<include refid="t_sys_user" />
+		<where>
+			<include refid="condition_sql" />
+		</where>
+	</select>
+
+	<select id="listByRoleId" parameterType="Long" resultMap="beanMap">
+		select O.* from
+		<include refid="t_sys_user" />
+		O LEFT JOIN
+		<include refid="t_sys_role_user" />
+		RO ON
+		O.ID = RO.user_id WHERE RO.role_id = #{roleId}
+	</select>
+
+</mapper>

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yunpay.serv.dao.RefundTranLsDao" >
+  <resultMap id="BaseResultMap" type="com.yunpay.serv.model.RefundTranLs" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="channel" property="channel" jdbcType="INTEGER" />
+    <result column="merchantNo" property="merchantNo" jdbcType="VARCHAR" />
+    <result column="merchantName" property="merchantName" jdbcType="VARCHAR" />
+    <result column="userRefundNo" property="userRefundNo" jdbcType="VARCHAR" />
+    <result column="oldUserOrderNo" property="oldUserOrderNo" jdbcType="VARCHAR" />
+    <result column="transNum" property="transNum" jdbcType="VARCHAR" />
+    <result column="oldTransNum" property="oldTransNum" jdbcType="VARCHAR" />
+    <result column="tradeNo" property="tradeNo" jdbcType="VARCHAR" />
+    <result column="transTime" property="transTime" jdbcType="TIMESTAMP" />
+    <result column="totalPrice" property="totalPrice" jdbcType="REAL" />
+    <result column="refundFee" property="refundFee" jdbcType="REAL" />
+    
+    <result column="refundChannel" property="refundChannel" jdbcType="VARCHAR" />
+    <result column="refundAccount" property="refundAccount" jdbcType="VARCHAR" />
+    <result column="refundRecvAccout" property="refundRecvAccout" jdbcType="VARCHAR" />
+    <result column="refundSuccessTime" property="refundSuccessTime" jdbcType="VARCHAR" />
+    
+    <result column="info" property="info" jdbcType="VARCHAR" />
+    <result column="orgNo" property="orgNo" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    
+  </resultMap>
+  <sql id="t_refund_tran_ls"> t_refund_tran_ls </sql>
+  
+  <sql id="Base_Column_List" >
+    id,channel,merchantNo, merchantName,userRefundNo,oldUserOrderNo,transNum, 
+    oldTransNum,tradeNo,transTime,totalPrice,refundFee,refundChannel,
+    refundAccount,refundRecvAccout,refundSuccessTime,info,orgNo,status
+  </sql>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from <include refid="t_refund_tran_ls" />
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from <include refid="t_refund_tran_ls" />
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.yunpay.serv.model.RefundTranLs" useGeneratedKeys="true" keyProperty="id">
+    insert into <include refid="t_refund_tran_ls" /> (channel,merchantNo, merchantName, userRefundNo, oldUserOrderNo, transNum, 
+    oldTransNum, tradeNo, transTime, totalPrice, refundFee,refundChannel,
+    refundAccount,refundRecvAccout,refundSuccessTime,info, orgNo,status)
+    values (#{channel,jdbcType=INTEGER},#{merchantNo,jdbcType=VARCHAR},#{merchantName,jdbcType=VARCHAR}, 
+    #{userRefundNo,jdbcType=VARCHAR},#{oldUserOrderNo,jdbcType=VARCHAR}, 
+    #{transNum,jdbcType=VARCHAR},#{oldTransNum,jdbcType=VARCHAR}, 
+    #{tradeNo,jdbcType=VARCHAR},#{transTime,jdbcType=TIMESTAMP}, 
+    #{totalPrice,jdbcType=REAL},#{refundFee,jdbcType=REAL},
+    #{refundChannel,jdbcType=VARCHAR},#{refundAccount,jdbcType=VARCHAR}, 
+    #{refundRecvAccout,jdbcType=VARCHAR},#{refundSuccessTime,jdbcType=VARCHAR},   
+    #{info,jdbcType=VARCHAR},#{orgNo,jdbcType=VARCHAR},#{status,jdbcType=INTEGER})
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.yunpay.serv.model.PayTranLs" >
+    insert into <include refid="t_refund_tran_ls" />
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="channel != null" >
+        channel,
+      </if>
+      <if test="merchantNo != null" >
+        merchantNo,
+      </if>
+      <if test="merchantName != null" >
+        merchantName,
+      </if>
+      <if test="userRefundNo != null" >
+        userRefundNo,
+      </if>
+      <if test="oldUserOrderNo != null" >
+        oldUserOrderNo,
+      </if>
+      <if test="transNum != null" >
+        transNum,
+      </if>
+       <if test="oldTransNum != null" >
+        oldTransNum,
+      </if>
+      <if test="tradeNo != null" >
+        tradeNo,
+      </if>
+      <if test="transTime != null" >
+        transTime,
+      </if>
+      <if test="totalPrice != null" >
+        totalPrice,
+      </if>
+      <if test="refundFee != null" >
+        refundFee,
+      </if>
+      <if test="refundChannel != null" >
+        refundChannel,
+      </if>
+      <if test="refundAccount != null" >
+        refundAccount,
+      </if>
+      <if test="refundRecvAccout != null" >
+        refundRecvAccout,
+      </if>
+      <if test="refundSuccessTime != null" >
+        refundSuccessTime,
+      </if>
+      <if test="info != null" >
+        info,
+      </if>
+      <if test="orgNo != null" >
+        orgNo,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+       <if test="channel != null" >
+        #{channel,jdbcType=INTEGER},
+      </if>
+      <if test="merchantNo != null" >
+        #{merchantName,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantName != null" >
+        #{merchantName,jdbcType=VARCHAR},
+      </if>
+      <if test="userRefundNo != null" >
+        #{userRefundNo,jdbcType=VARCHAR},
+      </if>
+      <if test="oldUserOrderNo != null" >
+        #{oldUserOrderNo,jdbcType=VARCHAR},
+      </if>
+      <if test="transNum != null" >
+        #{transNum,jdbcType=VARCHAR},
+      </if>
+      <if test="oldTransNum != null" >
+        #{oldTransNum,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeNo != null" >
+        #{tradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="transTime != null" >
+        #{transTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="totalPrice != null" >
+        #{totalPrice,jdbcType=REAL},
+      </if>
+      <if test="refundFee != null" >
+        #{refundFee,jdbcType=REAL},
+      </if>
+      <if test="refundChannel != null" >
+        #{refundChannel,jdbcType=VARCHAR},
+      </if>
+      <if test="refundAccount != null" >
+        #{refundAccount,jdbcType=VARCHAR},
+      </if>
+      <if test="refundRecvAccout != null" >
+        #{refundRecvAccout,jdbcType=VARCHAR},
+      </if>
+      <if test="refundSuccessTime != null" >
+         #{refundSuccessTime,jdbcType=VARCHAR},
+      </if>
+      <if test="info != null" >
+        #{info,jdbcType=VARCHAR},
+      </if>
+      <if test="orgNo != null" >
+        #{orgNo,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.yunpay.serv.model.RefundTranLs" >
+    update <include refid="t_refund_tran_ls" />
+    <set>
+      <if test="channel != null" >
+        channel = #{channel,jdbcType=INTEGER},
+      </if>
+      <if test="merchantNo != null" >
+        merchantNo = #{merchantNo,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantName != null" >
+        merchantName = #{merchantName,jdbcType=VARCHAR},
+      </if>
+      <if test="userRefundNo != null" >
+        userRefundNo = #{userRefundNo,jdbcType=VARCHAR},
+      </if>
+      <if test="oldUserOrderNo != null" >
+        oldUserOrderNo = #{oldUserOrderNo,jdbcType=VARCHAR},
+      </if>
+      <if test="transNum != null" >
+        transNum = #{transNum,jdbcType=VARCHAR},
+      </if>
+      <if test="oldTransNum != null" >
+        oldTransNum = #{oldTransNum,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeNo != null" >
+        tradeNo = #{tradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="transTime != null" >
+        transTime = #{transTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="totalPrice != null" >
+        totalPrice = #{totalPrice,jdbcType=REAL},
+      </if>
+      <if test="refundFee != null" >
+        refundFee = #{refundFee,jdbcType=REAL},
+      </if>
+      <if test="refundChannel != null" >
+        refundChannel=#{refundChannel,jdbcType=VARCHAR},
+      </if>
+      <if test="refundAccount != null" >
+        refundAccount=#{refundAccount,jdbcType=VARCHAR},
+      </if>
+      <if test="refundRecvAccout != null" >
+        refundRecvAccout=#{refundRecvAccout,jdbcType=VARCHAR},
+      </if>
+      <if test="refundSuccessTime != null" >
+         refundSuccessTime=#{refundSuccessTime,jdbcType=VARCHAR},
+      </if>
+      <if test="info != null" >
+        info = #{info,jdbcType=VARCHAR},
+      </if>
+      <if test="orgNo != null" >
+        orgNo = #{orgNo,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.yunpay.serv.model.RefundTranLs" >
+    update <include refid="t_refund_tran_ls" />
+    set channel=#{channel,jdbcType=INTEGER},
+      merchantNo = #{merchantNo,jdbcType=VARCHAR},
+      merchantName = #{merchantName,jdbcType=VARCHAR},
+      userRefundNo = #{userRefundNo,jdbcType=VARCHAR},
+      oldUserOrderNo = #{oldUserOrderNo,jdbcType=VARCHAR},
+      transNum = #{transNum,jdbcType=VARCHAR},
+      oldTransNum = #{oldTransNum,jdbcType=VARCHAR},
+      tradeNo = #{tradeNo,jdbcType=VARCHAR},
+      transTime = #{transTime,jdbcType=TIMESTAMP},
+      totalPrice = #{totalPrice,jdbcType=REAL},
+      refundFee = #{refundFee,jdbcType=REAL},
+      refundChannel=#{refundChannel,jdbcType=VARCHAR},
+      refundAccount=#{refundAccount,jdbcType=VARCHAR},
+      refundRecvAccout=#{refundRecvAccout,jdbcType=VARCHAR},
+      refundSuccessTime=#{refundSuccessTime,jdbcType=VARCHAR},
+      info = #{info,jdbcType=VARCHAR},
+      orgNo = #{orgNo,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

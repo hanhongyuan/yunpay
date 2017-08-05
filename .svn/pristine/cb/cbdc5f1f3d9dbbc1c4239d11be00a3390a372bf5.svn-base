@@ -1,0 +1,22 @@
+package com.yunpay.common.exception;
+
+public class PayException extends RuntimeException{
+
+	private static final long serialVersionUID = 1L;
+
+	public PayException(){
+		super();
+	}
+	
+	public PayException(String errMsg){
+		super(errMsg);
+	}
+	
+	public PayException(String errMsg,Throwable cause){
+		super(errMsg,cause);
+	}
+	
+	public PayException(Throwable cause){
+		super(cause);
+	}
+}

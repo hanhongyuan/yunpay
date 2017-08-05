@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunpay.permission.dao.impl.SysTermStatusDaoImpl">
+
+	<sql id="rpt_term_status"> RPT_TERM_STATUS </sql>
+	
+	<resultMap id="beanMap" type="com.yunpay.permission.entity.TermStatusEntity">
+        <result column="termSeq"        property="termSeq"          jdbcType="VARCHAR" />
+        <result column="region"         property="region"           jdbcType="VARCHAR" />
+        <result column="area"           property="area"             jdbcType="VARCHAR" />
+        <result column="termId"         property="termId"           jdbcType="VARCHAR" />
+        <result column="merchId"        property="merchId"          jdbcType="VARCHAR" />
+        <result column="merchName"      property="merchName"        jdbcType="VARCHAR" />
+        <result column="storeNo"        property="storeNo"          jdbcType="VARCHAR" />
+        <result column="storeName"      property="storeName"        jdbcType="VARCHAR" />
+        <result column="contractName"   property="contractName"     jdbcType="VARCHAR" />
+        <result column="contractPhone"  property="contractPhone"    jdbcType="VARCHAR" />
+        <result column="firstTranDate"  property="firstTranDate"    jdbcType="VARCHAR" />
+        <result column="endUseDate"     property="endUseDate"       jdbcType="VARCHAR" />
+        <result column="unusedDays"     property="unusedDays"       jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="listPageCount" parameterType="java.util.Map" resultType="long">
+        select count(1) from <include refid="rpt_term_status" /> s 
+                    left join tsys_area_code tac1 on tac1.areacode = s.region_code
+                    left join tsys_area_code tac2 on tac2.areacode = s.area_code
+                    left join sd_merch_base_info smbi on smbi.merch_id = s.merch_id
+                    left join sd_store ss on ss.store_id = s.store_id
+        <where>
+            <include refid="factor_sql" />
+        </where>
+    </select>
+    
+    <!-- 分页 -->
+    <select id="listPage" parameterType="java.util.Map" resultMap="beanMap">
+	    select * from (
+	        select t.*,rownum rowno from
+	        (select s.term_seq as termSeq, s.merch_id as merchId, s.store_id as storeNo, tac1.areaname as region, tac2.areaname as area, smbi.name_short as merchName,
+	                ss.store_name as storeName, s.contract_name as contractName, s.contact_phone as contractPhone, s.term_id as termId, s.first_tran_date as firstTranDate,
+	                s.end_use_date as endUseDate, trunc(sysdate) - to_date(substr(s.end_use_date, 0, 8), 'yyyy-mm-dd') as unusedDays
+		            from <include refid="rpt_term_status" /> s
+		            left join tsys_area_code tac1 on tac1.areacode = s.region_code
+		            left join tsys_area_code tac2 on tac2.areacode = s.area_code
+		            left join sd_merch_base_info smbi on smbi.merch_id = s.merch_id
+		            left join sd_store ss on ss.store_id = s.store_id
+                    <where>
+		                <include refid="factor_sql" />
+		            </where>
+		            order by s.end_use_date desc
+            ) t) 
+	        where rowno between #{startRowNum} and #{endRowNum}
+        order by rowno
+    </select>
+    
+    <!-- 导出专用 -->
+    <select id="termStatusListExcel" resultMap="beanMap">
+        select s.term_seq as termSeq, s.merch_id as merchId, s.store_id as storeNo, tac1.areaname as region, tac2.areaname as area, smbi.name_short as merchName,
+               ss.store_name as storeName, s.contract_name as contractName, s.contact_phone as contractPhone, s.term_id as termId, s.first_tran_date as firstTranDate,
+               s.end_use_date as endUseDate, trunc(sysdate) - to_date(substr(s.end_use_date, 0, 8), 'yyyy-mm-dd') as unusedDays
+               from <include refid="rpt_term_status" /> s
+               left join tsys_area_code tac1 on tac1.areacode = s.region_code
+               left join tsys_area_code tac2 on tac2.areacode = s.area_code
+               left join sd_merch_base_info smbi on smbi.merch_id = s.merch_id
+               left join sd_store ss on ss.store_id = s.store_id
+               order by s.end_use_date desc
+    </select>
+    
+    <!-- 查询市级下拉 -->
+    <select id="findRegion" resultType="com.yunpay.permission.entity.ComboxValue">
+        select areacode as code,areaname as name from TSYS_AREA_CODE where areatype='2' and status='1' order by order_no,areacode asc
+    </select>
+    
+    <sql id="factor_sql">
+        <!-- 动态语句 -->
+        <if test="region  != null and region != ''">   and s.region_code = #{region }</if>
+        <if test="area   != null and area != ''">      and s.area_code = #{area }</if>
+        <if test="merchName   != null and merchName != ''">  and smbi.name_short like CONCAT(CONCAT('%', #{merchName}), '%')</if>
+        <if test="storeName   != null and storeName != ''">  and ss.store_name like CONCAT(CONCAT('%', #{storeName}), '%')</if>
+        <if test="minEndUseDate   != null and minEndUseDate != ''"> and to_date(s.end_use_date,'yyyy-MM-dd hh24:mi:ss')&gt;to_date(#{minEndUseDate},'yyyy-mm-dd')-1</if>
+        <if test="maxEndUseDate   != null and maxEndUseDate != ''"> and to_date(s.end_use_date,'yyyy-MM-dd hh24:mi:ss')&lt;to_date(#{maxEndUseDate},'yyyy-mm-dd')+1</if>
+    </sql>
+    
+</mapper>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<print_info>
+	<title>汇商惠消费款对账确认函</title>
+	<context1>　　为更好的配合双方的业务往来，请贵司对结算期间的消费款进行确认。</context1>
+	<context2>　　下列数据出自本司账目记录，如与贵公司数据相符请在本函下端“数据确认无误”处签章证明,如有不符，请及时回复我公司。谢谢。</context2>
+	<tel item="　　电话：">23890133-816</tel>
+	<fax item="传真：">83228584</fax>
+	<link_man item="联系人：">廖小姐  </link_man>
+	<bill_no item="　　单据编号："></bill_no>
+	<set_time item="结算周期："></set_time>
+	<bottom_addr item="地址">深圳市福田区振华路122号海外装饰大厦B座7楼全层</bottom_addr>
+	<bottom_tel item="Tel">0755-23890133</bottom_tel>
+	<bottom_fax item="Fax">0755-83228584</bottom_fax>
+	<bottom_url item="Url">www.huishanghui.com</bottom_url>
+	
+	<set_item1>深圳通消费款</set_item1>
+	<total_name>应付合计：</total_name>
+	<notice_title>请盖章签回：</notice_title>
+	<notice1>1、以上数据确认无误</notice1>
+	<notice2>2、不符：截止至  ________ 年 ____ 月 ____ 日，我司消费金额为：________ 元</notice2>
+	<company_sign>深圳市汇商惠电子商务服务有限公司</company_sign>
+	<person_sign>对账人：</person_sign>
+	<date_sign>日期：</date_sign>
+</print_info>

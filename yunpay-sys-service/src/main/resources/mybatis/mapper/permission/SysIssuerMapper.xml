@@ -1,0 +1,939 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yunpay.permission.dao.impl.SysIssuerDaoImpl">
+
+	<sql id="sd_settle_detail"> SD_SETTLE_DETAIL </sql>
+	
+	<resultMap id="beanMap" type="com.yunpay.permission.entity.IssuerEntity">
+        <id column="settle_id"              property="settleId"         jdbcType="INTEGER" />
+        <result column="merch_id"           property="merchId"          jdbcType="VARCHAR" />
+        <result column="acq_inst"           property="issuerId"         jdbcType="VARCHAR" />
+        <result column="clear_date"         property="setDate"          jdbcType="VARCHAR" />
+        <result column="tran_amt"           property="tranAmt"          jdbcType="VARCHAR" />
+        <result column="bat_no"             property="batNo"            jdbcType="VARCHAR" />
+        <result column="term_ls"            property="termLs"           jdbcType="VARCHAR" />
+        <result column="cd_falg"            property="cdFlag"           jdbcType="VARCHAR" />
+        <result column="tran_date"          property="tranDate"         jdbcType="VARCHAR" />
+        <result column="merch_fee"          property="merchFee"         jdbcType="VARCHAR" />
+        <result column="merch_fee_dis"      property="merchFeeDis"      jdbcType="VARCHAR" />
+        <result column="merch_income"       property="merchIncome"      jdbcType="VARCHAR" />
+        <result column="merch_income_dis"   property="merchIncomeDis"   jdbcType="VARCHAR" />
+        <result column="isuser_fee"         property="issuerFee"        jdbcType="VARCHAR" />
+        <result column="isuser_fee_dis"     property="issuerFeeDis"     jdbcType="VARCHAR" />
+        <result column="isuser_income"      property="issuerIncome"     jdbcType="VARCHAR" />
+        <result column="isuser_income_dis"  property="issuerIncomeDis"  jdbcType="VARCHAR" />
+        <result column="accep_fee"          property="accepFee"         jdbcType="VARCHAR" />
+        <result column="accep_fee_dis"      property="accepFeeDis"      jdbcType="VARCHAR" />
+        <result column="accep_income"       property="accepIncome"      jdbcType="VARCHAR" />
+        <result column="accep_income_dis"   property="accepIncomeDis"   jdbcType="VARCHAR" />
+        <result column="store_id"           property="storeNo"          jdbcType="VARCHAR" />
+        
+        <result column="tran_desc"          property="tranType"         jdbcType="VARCHAR" />
+        <result column="store_name"         property="storeName"        jdbcType="VARCHAR" />
+        <result column="register_name"      property="merchName"        jdbcType="VARCHAR" />
+        <result column="short_name"         property="issuerName"       jdbcType="VARCHAR" />
+        <!-- 
+        <result column="request_url"    property="request_url"      jdbcType="VARCHAR" />
+        <result column="query_string"   property="query_string"     jdbcType="VARCHAR" />
+         -->
+    </resultMap>
+    <!-- 现在用到的 -->
+    <select id="selectByPrimaryKey" parameterType="java.util.Map" resultMap="beanMap">
+        select * from 
+        <include refid="sd_settle_detail" />
+        <where>
+            log_id = #{_parameter }
+        </where>
+    </select>
+
+    <!-- 统计条数 -->
+    <select id="listPageCount" parameterType="java.util.Map" resultType="long">
+        select count(1) from
+        (select (ssd.tran_amt-ssd.isuser_income) as issuerFeeIncome,ssd.settle_id as settleId, ssd.merch_id as merchId,
+                smbi.register_name as merchName,si.short_name as issuerName,ssd.acq_inst as issuerId,ssd.clear_date as setDate,
+                ssd.tran_amt as tranAmt,ssd.bat_no as batNo,ssd.term_ls as termLs,ssd.cd_falg as cdFlag,ssd.tran_date as tranDate,stcm.tran_desc as tranType,
+                ssd.merch_fee as merchFee, ssd.merch_fee_dis as merchFeeDis,ssd.merch_income as merchIncome,ssd.merch_income_dis as merchIncomeDis,
+                ssd.isuser_fee as issuerFee,ssd.isuser_fee_dis as issuerFeeDis,ssd.isuser_income as issuerIncome,ssd.isuser_income_dis as issuerIncomeDis,
+                ssd.accep_fee as accepFee,ssd.accep_fee_dis as accepFeeDis,ssd.accep_income as accepIncome,ssd.accep_income_dis as accepIncomeDis,
+                ssd.store_id as storeNo,ss.store_name as storeName from <include refid="sd_settle_detail" /> ssd 
+                left join sd_merch_base_info smbi on smbi.merch_id = ssd.merch_id 
+                left join sd_issuer si on si.issuer_id = ssd.acq_inst 
+                left join sd_tran_code_manage stcm on stcm.tran_type=ssd.tran_type 
+                left join sd_store ss on ss.store_id = ssd.store_id
+                <where>
+                    <include refid="factor_sql"></include>
+                </where>
+                order by ssd.clear_date desc 
+            )
+    </select>
+    
+    <!-- 分页 查询账单交易明细 -->
+    <select id="listPage" parameterType="java.util.Map" resultMap="beanMap">
+	    select * from (
+	        select issuer.*,rownum rowno from
+	        (select (ssd.tran_amt-ssd.isuser_income) as issuerFeeIncome,ssd.settle_id as settleId, ssd.merch_id as merchId,
+                    smbi.register_name as merchName,si.short_name as issuerName,ssd.acq_inst as issuerId,ssd.clear_date as setDate,
+                    ssd.tran_amt as tranAmt,ssd.bat_no as batNo,ssd.term_ls as termLs,ssd.cd_falg as cdFlag,ssd.tran_date as tranDate,stcm.tran_desc as tranType,
+                    ssd.merch_fee as merchFee, ssd.merch_fee_dis as merchFeeDis,ssd.merch_income as merchIncome,ssd.merch_income_dis as merchIncomeDis,
+                    ssd.isuser_fee as issuerFee,ssd.isuser_fee_dis as issuerFeeDis,ssd.isuser_income as issuerIncome,ssd.isuser_income_dis as issuerIncomeDis,
+                    ssd.accep_fee as accepFee,ssd.accep_fee_dis as accepFeeDis,ssd.accep_income as accepIncome,ssd.accep_income_dis as accepIncomeDis,
+                    ssd.store_id as storeNo,ss.store_name as storeName from <include refid="sd_settle_detail" /> ssd 
+                    left join sd_merch_base_info smbi on smbi.merch_id = ssd.merch_id 
+                    left join sd_issuer si on si.issuer_id = ssd.acq_inst 
+                    left join sd_tran_code_manage stcm on stcm.tran_type=ssd.tran_type 
+                    left join sd_store ss on ss.store_id = ssd.store_id
+                    <where>
+                        <include refid="factor_sql"></include>
+                    </where>
+                    order by ssd.clear_date desc 
+	        )issuer) 
+	           <where>
+	               <include refid="list_size_sql"></include>
+	           </where>
+        order by rowno
+    </select>
+    
+    <select id="findtranTypeList" resultType="com.yunpay.permission.entity.ComboxValue">
+        select tran_type as code,tran_desc as name from sd_tran_code_manage  where settle_flag=${_parameter } order by tran_type
+    </select>
+    
+    <!-- 深圳通消费/充值统计 -->
+    <select id="listIssuerSZTCount" parameterType="java.util.Map" resultType="long">
+        select count(1) from (
+           select issuer.*,rownum rowno from (
+             select t.bill_id as billId,si.issuer_id as issuerId,
+                si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as
+                outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as
+                billStatus, t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,
+                null as outBillRmk,null as checkBillRmk from sd_set_issuer_bill t 
+                left join sd_issuer si on si.issuer_id = t.issuer_id 
+                left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01' 
+                left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04' 
+                <where>
+                    <include refid="factor_sql_SZT"></include>
+                </where>
+                order by t.create_time desc 
+            )issuer) 
+            order by rowno
+    </select>
+    
+    <!-- 深圳通消费/充值分页 -->
+    <select id="listIssuerSZT" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+		select * from (
+		   select issuer.*,rownum rowno from (
+		     select t.bill_id as billId,si.issuer_id as issuerId,
+				si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as
+                outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as
+				billStatus, t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,
+				null as outBillRmk,null as checkBillRmk from sd_set_issuer_bill t 
+				left join sd_issuer si on si.issuer_id = t.issuer_id 
+				left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01' 
+				left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04' 
+				<where>
+                    <include refid="factor_sql_SZT"></include>
+                </where>
+				order by t.create_time desc 
+			)issuer) 
+			   <where>
+                   <include refid="list_size_sql"></include>
+               </where>
+			order by rowno
+    </select>
+    
+    <!-- 统计深圳通 -->
+    <select id="IssuerSZTCount" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranAmt) as sumTotal1,sum(tranNum) as sumTotal2, sum(inFee) as sumTotal3,sum(outFee) as sumTotal4,sum(outAmt) as sumTotal5,
+               sum(inAmt) as sumTotal6,sum(setFactAmt) as sumTotal7,null as sumTotal8,null as sumTotal9,null as sumTotal10 
+               from (select issuer.*,rownum rowno 
+                    from (
+                    select t.bill_id as billId,si.issuer_id as issuerId,
+		                si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as
+		                outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as
+		                billStatus, t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,
+		                null as outBillRmk,null as checkBillRmk 
+		                from sd_set_issuer_bill t 
+		                left join sd_issuer si on si.issuer_id = t.issuer_id 
+		                left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01' 
+		                left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04' 
+		                <where>
+		                    <include refid="factor_sql_SZT"></include>
+		                </where>
+		                order by t.create_time desc 
+                    )issuer) 
+	                <where>
+	                    <include refid="list_size_sql"></include>
+	                </where>
+                    order by rowno
+    </select>
+    
+    <!-- 根据id查询深圳通 -->
+    <select id="ViewIssuerBill" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.bill_id as billId,si.issuer_id as issuerId,
+             si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,nvl((t.out_amt+t.in_amt),0) as viewAmt,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as
+             outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as
+             billStatus, t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,
+             null as outBillRmk,null as checkBillRmk from sd_set_issuer_bill t 
+             left join sd_issuer si on si.issuer_id = t.issuer_id 
+             left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01' 
+             left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04' 
+             where t.tran_num>0 and t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 根据id查询list -->
+    <select id="ViewIssuerBillList"  resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass, t.tran_num as tranNum,t.tran_amt as tranAmt,
+            nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt, nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+            smbi.register_name as merchName,smt.typename as mccName  
+            from sd_set_issuer_detail t
+            left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class 
+            left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id 
+            left join sd_merch_type smt on smt.typecode = smbi.mertype 
+            where t.bill_id=#{BillId }
+    </select>
+    
+    <!-- szt -->
+    <select id="CountIssuerSZTBillList"  resultType="com.yunpay.permission.entity.TotalCount">
+    select sum(tranNum) as sumTotal1, sum(tranAmt) as sumTotal2, sum(benefitAmt) as sumTotal3, sum(settleAmt) as sumTotal4, null as sumTotal5
+        from (
+	        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass, t.tran_num as tranNum,t.tran_amt as tranAmt,
+	            nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt, nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+	            smbi.register_name as merchName,smt.typename as mccName  
+	            from sd_set_issuer_detail t
+	            left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class 
+	            left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id 
+	            left join sd_merch_type smt on smt.typecode = smbi.mertype 
+	            where t.bill_id=#{BillId })
+    </select>
+    
+    <!-- 消费月账单统计  -->
+    <select id="listIssuerMonthCount" parameterType="java.util.Map" resultType="long">
+        select count(1) from (select sib.issuer_id as issuer_id, to_char(to_date(sib.create_time,'yyyy-mm-dd'),'yyyy-mm') as create_time, 
+            sum(sib.tran_num)as tran_num, sum(sib.tran_amt) as tran_amt , sum(sib.out_fee) as out_fee, sum(sib.in_amt) as in_amt 
+            from sd_set_issuer_bill sib where INSTR(sib.bill_id,'37',1,1) &lt;&gt; 0 
+            group by sib.issuer_id, to_char(to_date(sib.create_time,'yyyy-mm-dd'),'yyyy-mm') ) month_issuer 
+            left join sd_issuer si on si.issuer_id =  month_issuer.issuer_id 
+            <where>
+	           <include refid="factor_sql_month"></include>
+	        </where>
+    </select>
+    
+    <!-- 消费月账单分页  -->
+    <select id="listIssuerMonth" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select * from (
+           select month.*,rownum rowno from (
+              select month_issuer.create_time as createTime, 
+                month_issuer.issuer_id  as issuerId ,si.short_name as issuerName, month_issuer.tran_num as tranNum, 
+                month_issuer.tran_amt as tranAmt ,month_issuer.out_fee as outFee, month_issuer.in_amt as inAmt 
+                from (select sib.issuer_id as issuer_id, to_char(to_date(sib.create_time,'yyyy-mm-dd'),'yyyy-mm') as create_time, 
+                sum(sib.tran_num)as tran_num, sum(sib.tran_amt) as tran_amt , sum(sib.out_fee) as out_fee, sum(sib.in_amt) as in_amt 
+                from sd_set_issuer_bill sib where INSTR(sib.bill_id,'37',1,1) &lt;&gt; 0 
+                group by sib.issuer_id, to_char(to_date(sib.create_time,'yyyy-mm-dd'),'yyyy-mm') ) month_issuer 
+                left join sd_issuer si on si.issuer_id =  month_issuer.issuer_id 
+                <where>
+	               <include refid="factor_sql_month"></include>
+	            </where>
+	            order by createTime desc 
+              )month)
+              <where>
+                  <include refid="list_size_sql"></include>
+              </where>
+              order by rowno
+    </select>
+    
+    <!-- 统计消费月账单 -->
+    <select id="IssuerSetMCount"  parameterType="java.util.Map" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranNum) as sumTotal1,sum(tranAmt) as sumTotal2, sum(outFee) as sumTotal3,sum(inAmt) as sumTotal4,null as sumTotal5,
+               null as sumTotal6,null as sumTotal7,null as sumTotal8,null as sumTotal9,null as sumTotal10 
+               from (select M.*,rownum rowno 
+                    from (
+                    select month_issuer.create_time as createTime, 
+		                month_issuer.issuer_id  as issuerId ,si.short_name as issuerName, month_issuer.tran_num as tranNum, 
+		                month_issuer.tran_amt as tranAmt ,month_issuer.out_fee as outFee, month_issuer.in_amt as inAmt 
+		                from (select sib.issuer_id as issuer_id, to_char(to_date(sib.create_time,'yyyy-mm-dd'),'yyyy-mm') as create_time, 
+		                sum(sib.tran_num)as tran_num, sum(sib.tran_amt) as tran_amt , sum(sib.out_fee) as out_fee, sum(sib.in_amt) as in_amt 
+		                from sd_set_issuer_bill sib where INSTR(sib.bill_id,'37',1,1) &lt;&gt; 0 
+		                group by sib.issuer_id, to_char(to_date(sib.create_time,'yyyy-mm-dd'),'yyyy-mm') ) month_issuer 
+		                left join sd_issuer si on si.issuer_id =  month_issuer.issuer_id 
+                        <where>
+                            <include refid="factor_sql_month"></include>
+                        </where>
+                        order by month_issuer.create_time desc 
+                    )M) 
+                    <where>
+                        <include refid="list_size_sql"></include>
+                    </where>
+                    order by rowno
+    </select>
+    
+    <!-- 微信消费统计  -->
+    <select id="listIssuerSetWCount" parameterType="java.util.Map" resultType="long">
+        select count(1) from sd_set_issuer_bill_w t
+              left join sd_issuer si on si.issuer_id = t.issuer_id
+              left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+              left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+              <where>
+                <include refid="factor_sql_select"></include>
+              </where>
+    </select>
+    
+    <!-- 微信消费分页  -->
+    <select id="listIssuerSetW" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select * from (
+           select W.*,rownum rowno from (
+              select t.bill_id as billId,si.issuer_id as issuerId,
+                  si.short_name as issuerName,t.tran_amt as tranAmt,
+                  t.tran_num as tranNum ,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee,
+                   nvl(t.out_amt,0) as outAmt,nvl(t.in_amt,0) as inAmt,
+                  ssif1.deal_time as billDate,t.set_begindate as setBeginDate,
+                  t.set_enddate as setEndDate,t.bill_status as billStatus,
+                  t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt,
+                  ssif2.deal_time as checkDate,null as outBillRmk,null as checkBillRmk 
+                  from sd_set_issuer_bill_w t
+                  left join sd_issuer si on si.issuer_id = t.issuer_id
+                  left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+                  left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+                  <where>
+	                <include refid="factor_sql_select"></include>
+	              </where>
+              )W)
+              <where>
+                  <include refid="list_size_sql"></include>
+              </where>
+              order by rowno
+    </select>
+    
+    <!-- 统计微信消费数据 -->
+    <select id="IssuerSetWCount"  parameterType="java.util.Map" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranAmt) as sumTotal1,sum(tranNum) as sumTotal2, sum(inFee) as sumTotal3,sum(outFee) as sumTotal4,sum(outAmt) as sumTotal5,
+               sum(inAmt) as sumTotal6,sum(setFactAmt) as sumTotal7,null as sumTotal8,null as sumTotal9,null as sumTotal10 
+               from (select W.*,rownum rowno 
+                    from (
+                    select t.bill_id as billId,si.issuer_id as issuerId,
+                        si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as
+                        outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as
+                        billStatus, t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,
+                        null as outBillRmk,null as checkBillRmk 
+                        from sd_set_issuer_bill_w t 
+                        left join sd_issuer si on si.issuer_id = t.issuer_id 
+                        left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01' 
+                        left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04' 
+                        <where>
+                            <include refid="factor_sql_select"></include>
+                        </where>
+                        order by t.create_time desc 
+                    )W) 
+                    <where>
+                        <include refid="list_size_sql"></include>
+                    </where>
+                    order by rowno
+    </select>
+    
+    <!-- 同城微信消费统计  -->
+    <select id="listIssuerSetTWCount" parameterType="java.util.Map" resultType="long">
+        select count(1) from sd_set_issuer_bill_tw t
+              left join sd_issuer si on si.issuer_id = t.issuer_id
+              left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+              left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+              <where>
+                <include refid="factor_sql_select"></include>
+              </where>
+    </select>
+    
+    <!-- 同城微信消费分页 -->
+    <select id="listIssuerSetTW" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select * from (
+           select TW.*,rownum rowno from (
+              select t.bill_id as billId,si.issuer_id as issuerId,
+                  si.short_name as issuerName,t.tran_amt as tranAmt,
+                  t.tran_num as tranNum ,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee,
+                   nvl(t.out_amt,0) as outAmt,nvl(t.in_amt,0) as inAmt,
+                  ssif1.deal_time as billDate,t.set_begindate as setBeginDate,
+                  t.set_enddate as setEndDate,t.bill_status as billStatus,
+                  t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt,
+                  ssif2.deal_time as checkDate,null as outBillRmk,null as checkBillRmk 
+                  from sd_set_issuer_bill_tw t
+                  left join sd_issuer si on si.issuer_id = t.issuer_id
+                  left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+                  left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+                  <where>
+	                <include refid="factor_sql_select"></include>
+	              </where>
+              )TW)
+              <where>
+                  <include refid="list_size_sql"></include>
+              </where>
+              order by rowno
+    </select>
+    
+    <!-- 统计同城微信消费数据 -->
+    <select id="IssuerSetTWCount"  parameterType="java.util.Map" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranAmt) as sumTotal1,sum(tranNum) as sumTotal2, sum(inFee) as sumTotal3,sum(outFee) as sumTotal4,sum(outAmt) as sumTotal5,
+               sum(inAmt) as sumTotal6,sum(setFactAmt) as sumTotal7,null as sumTotal8,null as sumTotal9,null as sumTotal10 
+               from (select TW.*,rownum rowno 
+                    from (
+                    select t.bill_id as billId,si.issuer_id as issuerId,
+                        si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as
+                        outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as
+                        billStatus, t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,
+                        null as outBillRmk,null as checkBillRmk 
+                        from sd_set_issuer_bill_tw t 
+                        left join sd_issuer si on si.issuer_id = t.issuer_id 
+                        left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01' 
+                        left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04' 
+                        <where>
+                            <include refid="factor_sql_select"></include>
+                        </where>
+                        order by t.create_time desc 
+                    )TW) 
+                    <where>
+                        <include refid="list_size_sql"></include>
+                    </where>
+                    order by rowno
+    </select>
+    
+    <!-- 查询微信交易明细 -->
+    <select id="ViewIssuerWBill" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.bill_id as billId,t.issuer_id as issuerId, si.issuer_name as issuerName,t.tran_amt as tranAmt,
+            t.tran_num as tranNum,nvl((t.out_amt+t.in_amt),0) as viewAmt,t.in_fee as inFee,t.out_fee as outFee, t.out_amt as outAmt,t.in_amt as inAmt,
+            ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as billStatus,
+            t.set_cycle as setCycle,t.create_time as createTime,t.set_factAmt as setFactAmt,
+            ssif2.deal_time as checkDate,ssif1.deal_remark as outBillRmk,
+            ssif2.deal_remark as checkBillRmk from sd_set_issuer_bill_w t
+            left join sd_issuer si on si.issuer_id = t.issuer_id
+            left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and
+            ssif1.deal_type='01'
+            left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and
+            ssif2.deal_type='04'
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 微信查看根据id -->
+    <select id="ViewIssuerWBillList" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as
+            setClass,
+            t.tran_num as tranNum,t.tran_amt as tranAmt,
+            nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+            nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+            smbi.register_name as merchName,smt.typename as mccName from
+            sd_set_issuer_detail_w t
+            left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+            left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+            left join sd_merch_type smt on smt.typecode = smbi.mertype
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 查询同城微信交易明细 -->
+    <select id="ViewIssuerTWBill" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.bill_id as billId,t.issuer_id as issuerId,
+            si.issuer_name as issuerName,t.tran_amt as tranAmt,
+            t.tran_num as tranNum,nvl((t.out_amt+t.in_amt),0) as viewAmt,t.in_fee as inFee,t.out_fee as outFee,
+            t.out_amt as outAmt,t.in_amt as inAmt,
+            ssif1.deal_time as billDate,t.set_begindate as setBeginDate,
+            t.set_enddate as setEndDate,t.bill_status as billStatus,
+            t.set_cycle as setCycle,t.create_time as createTime,t.set_factAmt as setFactAmt,
+            ssif2.deal_time as checkDate,ssif1.deal_remark as outBillRmk,
+            ssif2.deal_remark as checkBillRmk from sd_set_issuer_bill_tw t
+            left join sd_issuer si on si.issuer_id = t.issuer_id
+            left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and
+            ssif1.deal_type='01'
+            left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and
+            ssif2.deal_type='04'
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 同城微信查看根据id -->
+    <select id="ViewIssuerTWBillList" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass,
+            t.tran_num as tranNum,t.tran_amt as tranAmt,
+            nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+            nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+            smbi.register_name as merchName,smt.typename as mccName from
+            sd_set_issuer_detail_tw t
+            left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+            left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+            left join sd_merch_type smt on smt.typecode = smbi.mertype
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 同城微信统计根据id -->
+    <select id="CountIssuerTWBillList" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranNum) as sumTotal1, sum(tranAmt) as sumTotal2, sum(benefitAmt) as sumTotal3, sum(settleAmt) as sumTotal4, null as sumTotal5
+            from (
+		        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass, t.tran_num as tranNum,t.tran_amt as tranAmt,
+		            nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+		            nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+		            smbi.register_name as merchName,smt.typename as mccName from
+		            sd_set_issuer_detail_tw t
+		            left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+		            left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+		            left join sd_merch_type smt on smt.typecode = smbi.mertype
+		            where t.bill_id = #{BillId })
+    </select>
+    
+    <!-- 微信统计根据id -->
+    <select id="CountIssuerWBillList"  resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranNum) as sumTotal1, sum(tranAmt) as sumTotal2, sum(benefitAmt) as sumTotal3, sum(settleAmt) as sumTotal4, null as sumTotal5
+            from (select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass, t.tran_num as tranNum,t.tran_amt as tranAmt,
+                    nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+                    nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+                    smbi.register_name as merchName,smt.typename as mccName from
+                    sd_set_issuer_detail_w t
+                    left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+                    left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+                    left join sd_merch_type smt on smt.typecode = smbi.mertype
+                    where t.bill_id = #{BillId })
+    </select>
+    
+    <!-- 查询支付宝交易明细 -->
+    <select id="ViewIssuerABill" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.bill_id as billId,t.issuer_id as issuerId, si.issuer_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,
+	        nvl((t.out_amt+t.in_amt),0) as viewAmt,t.in_fee as inFee,t.out_fee as outFee, t.out_amt as outAmt,t.in_amt as inAmt, ssif1.deal_time as billDate,
+	        t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as billStatus, t.set_cycle as setCycle,t.create_time as createTime,
+	        t.set_factAmt as setFactAmt, ssif2.deal_time as checkDate,ssif1.deal_remark as outBillRmk, ssif2.deal_remark as checkBillRmk 
+            from sd_set_issuer_bill_a t
+            left join sd_issuer si on si.issuer_id = t.issuer_id
+            left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+            left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 支付宝查看根据id -->
+    <select id="ViewIssuerABillList" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as
+            setClass,
+            t.tran_num as tranNum,t.tran_amt as tranAmt,
+            nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+            nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+            smbi.register_name as merchName,smt.typename as mccName from
+            sd_set_issuer_detail_a t
+            left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+            left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+            left join sd_merch_type smt on smt.typecode = smbi.mertype
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 支付宝统计根据id -->
+    <select id="CountIssuerABillList" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranNum) as sumTotal1, sum(tranAmt) as sumTotal2, sum(benefitAmt) as sumTotal3, sum(settleAmt) as sumTotal4, null as sumTotal5 
+            from (
+		        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass,
+		            t.tran_num as tranNum,t.tran_amt as tranAmt,
+		            nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+		            nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+		            smbi.register_name as merchName,smt.typename as mccName from
+		            sd_set_issuer_detail_a t
+		            left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+		            left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+		            left join sd_merch_type smt on smt.typecode = smbi.mertype
+		            where t.bill_id = #{BillId })
+    </select>
+    
+    <!-- 查询同城支付宝交易明细 -->
+    <select id="ViewIssuerTABill" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.bill_id as billId,t.issuer_id as issuerId,
+            si.issuer_name as issuerName,t.tran_amt as tranAmt,
+            t.tran_num as tranNum,nvl((t.out_amt+t.in_amt),0) as viewAmt,t.in_fee as inFee,t.out_fee as outFee,
+            t.out_amt as outAmt,t.in_amt as inAmt,
+            ssif1.deal_time as billDate,t.set_begindate as setBeginDate,
+            t.set_enddate as setEndDate,t.bill_status as billStatus,
+            t.set_cycle as setCycle,t.create_time as createTime,t.set_factAmt as setFactAmt,
+            ssif2.deal_time as checkDate,ssif1.deal_remark as outBillRmk,
+            ssif2.deal_remark as checkBillRmk from sd_set_issuer_bill_ta t
+            left join sd_issuer si on si.issuer_id = t.issuer_id
+            left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and
+            ssif1.deal_type='01'
+            left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and
+            ssif2.deal_type='04'
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 查询同城支付宝交易明细统计 -->
+    <select id="CountIssuerTABillList" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranNum) as sumTotal1, sum(tranAmt) as sumTotal2, sum(benefitAmt) as sumTotal3, sum(settleAmt) as sumTotal4, null as sumTotal5
+            from (
+                select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass,
+                    t.tran_num as tranNum,t.tran_amt as tranAmt,
+                    nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+                    nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+                    smbi.register_name as merchName,smt.typename as mccName from
+                    sd_set_issuer_detail_ta t
+                    left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+                    left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+                    left join sd_merch_type smt on smt.typecode = smbi.mertype
+		            where t.bill_id = #{BillId })
+    </select>
+    
+    <!-- 查询同城支付宝消费明细 -->
+    <select id="ViewIssuerTABillList" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass,
+            t.tran_num as tranNum,t.tran_amt as tranAmt,
+            nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+            nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+            smbi.register_name as merchName,smt.typename as mccName from
+            sd_set_issuer_detail_ta t
+            left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+            left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+            left join sd_merch_type smt on smt.typecode = smbi.mertype
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 查询翼支付交易明细 -->
+    <select id="ViewIssuerYBill" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.bill_id as billId,t.issuer_id as issuerId,
+            si.issuer_name as issuerName,t.tran_amt as tranAmt,
+            t.tran_num as tranNum,nvl((t.out_amt+t.in_amt),0) as viewAmt,t.in_fee as inFee,t.out_fee as outFee,
+            t.out_amt as outAmt,t.in_amt as inAmt,
+            ssif1.deal_time as billDate,t.set_begindate as setBeginDate,
+            t.set_enddate as setEndDate,t.bill_status as billStatus,
+            t.set_cycle as setCycle,t.create_time as createTime,t.set_factAmt as setFactAmt,
+            ssif2.deal_time as checkDate,ssif1.deal_remark as outBillRmk,
+            ssif2.deal_remark as checkBillRmk from sd_set_issuer_bill_y t
+            left join sd_issuer si on si.issuer_id = t.issuer_id
+            left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and
+            ssif1.deal_type='01'
+            left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and
+            ssif2.deal_type='04'
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 翼支付交易明细统计 -->
+    <select id="CountIssuerYBillList" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranNum) as sumTotal1, sum(tranAmt) as sumTotal2, sum(benefitAmt) as sumTotal3, sum(settleAmt) as sumTotal4, null as sumTotal5
+            from (
+		        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass, t.tran_num as tranNum,t.tran_amt as tranAmt,
+                    nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+                    nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+                    smbi.register_name as merchName,smt.typename as mccName from
+                    sd_set_issuer_detail_y t
+                    left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+                    left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+                    left join sd_merch_type smt on smt.typecode = smbi.mertype
+		            where t.bill_id = #{BillId })
+    </select>
+    
+    <select id="ViewIssuerYBillList" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select t.detail_id as detailId,t.bill_id as billId,stcm.tran_desc as setClass,
+            t.tran_num as tranNum,t.tran_amt as tranAmt,
+            nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt,
+            nvl(round(t.settle_amt,2),0) as settleAmt,t.merch_id as merchId,
+            smbi.register_name as merchName,smt.typename as mccName from
+            sd_set_issuer_detail_y t
+            left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+            left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+            left join sd_merch_type smt on smt.typecode = smbi.mertype
+            where t.bill_id = #{BillId }
+    </select>
+    
+    <!-- 查询月消费交易明细 -->
+    <select id="ViewIssuerMonthBillList" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+		select set_time billId,setClass,set_time as set_time ,merchId,merchName,mccName,sum(tranNum) as tranNum, sum(tranAmt) as tranAmt,
+			benefitDis as benefitDis ,sum(benefitAmt) as benefitAmt,sum(settleAmt) as settleAmt
+			from (
+			select t.detail_id as detailId, t.bill_id as billId,stcm.tran_desc as setClass, t.tran_num as tranNum,
+			t.tran_amt as tranAmt, nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt, nvl(round(t.settle_amt,2),0) as settleAmt,
+			t.merch_id as merchId, smbi.register_name as merchName, smt.typename as mccName , 
+			to_char(to_date(t.set_time,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm') as set_time from sd_set_issuer_detail t
+			left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+			left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+			left join sd_merch_type smt on smt.typecode = smbi.mertype
+			where INSTR(t.bill_id,'37',1,1) &lt;&gt;0 
+			and to_char(to_date(set_time, 'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm') = to_char(to_date(#{createTime},'yyyy-mm-dd'),'yyyy-mm'))
+			month_detail group by set_time,merchId,benefitDis,merchName,mccName,setClass order by set_time desc 
+    </select>
+    
+    <!-- 查询月消费交易明细统计 -->
+    <select id="CountIssuerMBillList" resultType="com.yunpay.permission.entity.TotalCount">
+	    select sum(tranNum) as sumTotal1, sum(tranAmt) as sumTotal2, sum(benefitAmt) as sumTotal3, sum(settleAmt) as sumTotal4, null as sumTotal5
+            from (
+		        select t.detail_id as detailId, t.bill_id as billId,stcm.tran_desc as setClass, t.tran_num as tranNum,
+			        t.tran_amt as tranAmt, nvl(t.benefit_dis,0) as benefitDis,nvl(round(t.benefit_amt,2),0) as benefitAmt, nvl(round(t.settle_amt,2),0) as settleAmt,
+			        t.merch_id as merchId, smbi.register_name as merchName, smt.typename as mccName , 
+			        to_char(to_date(t.set_time,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm') as set_time from sd_set_issuer_detail t
+			        left join sd_tran_code_manage stcm on stcm.tran_type = t.set_class
+			        left join sd_merch_base_info smbi on smbi.merch_id = t.merch_id
+			        left join sd_merch_type smt on smt.typecode = smbi.mertype
+			        where INSTR(t.bill_id,'37',1,1) &lt;&gt;0 
+			        and to_char(to_date(set_time, 'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm') = to_char(to_date(#{createTime},'yyyy-mm-dd'),'yyyy-mm'))month_detail
+    </select>
+    
+    <!-- 翼支付消费统计  -->
+    <select id="listIssuerSetYCount" parameterType="java.util.Map" resultType="long">
+        select count(1) from sd_set_issuer_bill_y t
+              left join sd_issuer si on si.issuer_id = t.issuer_id
+              left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+              left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+              <where>
+                <include refid="factor_sql_select"></include>
+              </where>
+    </select>
+    
+    <!-- 翼支付消费分页 -->
+    <select id="listIssuerSetY" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select * from (
+           select Y.*,rownum rowno from (
+              select t.bill_id as billId,si.issuer_id as issuerId, si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum ,
+                  nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,
+                  t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as billStatus, t.set_cycle as setCycle,t.create_time as createTime,
+                  t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,null as outBillRmk,null as checkBillRmk 
+                  from sd_set_issuer_bill_y t
+                  left join sd_issuer si on si.issuer_id = t.issuer_id
+                  left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+                  left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+                  <where>
+	                <include refid="factor_sql_select"></include>
+	              </where>
+              )Y)
+              <where>
+                  <include refid="list_size_sql"></include>
+              </where>
+              order by rowno
+    </select>
+    
+    <!-- 统计翼支付消费数据 -->
+    <select id="IssuerSetYCount"  parameterType="java.util.Map" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranAmt) as sumTotal1,sum(tranNum) as sumTotal2, sum(inFee) as sumTotal3,sum(outFee) as sumTotal4,sum(outAmt) as sumTotal5,
+               sum(inAmt) as sumTotal6,sum(setFactAmt) as sumTotal7,null as sumTotal8,null as sumTotal9,null as sumTotal10 
+               from (select Y.*,rownum rowno 
+                    from (
+                    select t.bill_id as billId,si.issuer_id as issuerId,
+                        si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as
+                        outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as
+                        billStatus, t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,
+                        null as outBillRmk,null as checkBillRmk 
+                        from sd_set_issuer_bill_y t 
+                        left join sd_issuer si on si.issuer_id = t.issuer_id 
+                        left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01' 
+                        left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04' 
+                        <where>
+                            <include refid="factor_sql_select"></include>
+                        </where>
+                    )Y) 
+                    <where>
+                        <include refid="list_size_sql"></include>
+                    </where>
+                    order by rowno
+    </select>
+    
+    <!-- 同城支付宝消费统计  -->
+    <select id="listIssuerSetTACount" parameterType="java.util.Map" resultType="long">
+        select count(1) from sd_set_issuer_bill_ta t
+              left join sd_issuer si on si.issuer_id = t.issuer_id
+              left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+              left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+              <where>
+                <include refid="factor_sql_select"></include>
+              </where>
+    </select>
+    
+    <!-- 同城支付宝消费分页 -->
+    <select id="listIssuerSetTA" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select * from (
+           select TA.*,rownum rowno from (
+              select t.bill_id as billId,si.issuer_id as issuerId,
+                  si.short_name as issuerName,t.tran_amt as tranAmt,
+                  t.tran_num as tranNum ,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee,
+                   nvl(t.out_amt,0) as outAmt,nvl(t.in_amt,0) as inAmt,
+                  ssif1.deal_time as billDate,t.set_begindate as setBeginDate,
+                  t.set_enddate as setEndDate,t.bill_status as billStatus,
+                  t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt,
+                  ssif2.deal_time as checkDate,null as outBillRmk,null as checkBillRmk 
+                  from sd_set_issuer_bill_ta t
+                  left join sd_issuer si on si.issuer_id = t.issuer_id
+                  left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+                  left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+                  <where>
+	                <include refid="factor_sql_select"></include>
+	              </where>
+              )TA)
+              <where>
+                  <include refid="list_size_sql"></include>
+              </where>
+              order by rowno
+    </select>
+    
+    <!-- 统计同城支付宝消费数据 -->
+    <select id="IssuerSetTACount"  parameterType="java.util.Map" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranAmt) as sumTotal1,sum(tranNum) as sumTotal2, sum(inFee) as sumTotal3,sum(outFee) as sumTotal4,sum(outAmt) as sumTotal5,
+               sum(inAmt) as sumTotal6,sum(setFactAmt) as sumTotal7,null as sumTotal8,null as sumTotal9,null as sumTotal10 
+               from (select TA.*,rownum rowno 
+                    from (
+                    select t.bill_id as billId,si.issuer_id as issuerId,
+                        si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as
+                        outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as
+                        billStatus, t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,
+                        null as outBillRmk,null as checkBillRmk 
+                        from sd_set_issuer_bill_ta t 
+                        left join sd_issuer si on si.issuer_id = t.issuer_id 
+                        left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01' 
+                        left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04' 
+                        <where>
+                            <include refid="factor_sql_select"></include>
+                        </where>
+                    )TA) 
+                    <where>
+                        <include refid="list_size_sql"></include>
+                    </where>
+                    order by rowno
+    </select>
+    
+    <!-- 支付宝消费统计  -->
+    <select id="listIssuerSetACount" parameterType="java.util.Map" resultType="long">
+        select count(1) from sd_set_issuer_bill_a t
+              left join sd_issuer si on si.issuer_id = t.issuer_id
+              left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+              left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+              <where>
+                <include refid="factor_sql_select"></include>
+              </where>
+    </select>
+    
+    <!-- 支付宝消费分页 -->
+    <select id="listIssuerSetA" parameterType="java.util.Map" resultType="com.yunpay.permission.entity.IssuerSZTEntity">
+        select * from (
+           select A.*,rownum rowno from (
+              select t.bill_id as billId,si.issuer_id as issuerId,
+                  si.short_name as issuerName,t.tran_amt as tranAmt,
+                  t.tran_num as tranNum ,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee,
+                   nvl(t.out_amt,0) as outAmt,nvl(t.in_amt,0) as inAmt,
+                  ssif1.deal_time as billDate,t.set_begindate as setBeginDate,
+                  t.set_enddate as setEndDate,t.bill_status as billStatus,
+                  t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt,
+                  ssif2.deal_time as checkDate,null as outBillRmk,null as checkBillRmk from sd_set_issuer_bill_a t
+                  left join sd_issuer si on si.issuer_id = t.issuer_id
+                  left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01'
+                  left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04'
+                  <where>
+	                <include refid="factor_sql_select"></include>
+	              </where>
+              )A)
+              <where>
+                  <include refid="list_size_sql"></include>
+              </where>
+              order by rowno
+    </select>
+    
+    <!-- 统计同城支付宝消费数据 -->
+    <select id="IssuerSetACount"  parameterType="java.util.Map" resultType="com.yunpay.permission.entity.TotalCount">
+        select sum(tranAmt) as sumTotal1,sum(tranNum) as sumTotal2, sum(inFee) as sumTotal3,sum(outFee) as sumTotal4,sum(outAmt) as sumTotal5,
+               sum(inAmt) as sumTotal6,sum(setFactAmt) as sumTotal7,null as sumTotal8,null as sumTotal9,null as sumTotal10 
+               from (select A.*,rownum rowno 
+                    from (
+                    select t.bill_id as billId,si.issuer_id as issuerId,
+                        si.short_name as issuerName,t.tran_amt as tranAmt, t.tran_num as tranNum,nvl(t.in_fee,0) as inFee,nvl(t.out_fee,0) as outFee, nvl(t.out_amt,0) as
+                        outAmt,nvl(t.in_amt,0) as inAmt, ssif1.deal_time as billDate,t.set_begindate as setBeginDate, t.set_enddate as setEndDate,t.bill_status as
+                        billStatus, t.set_cycle as setCycle,t.create_time as createTime,t.set_factamt as setFactAmt, ssif2.deal_time as checkDate,
+                        null as outBillRmk,null as checkBillRmk 
+                        from sd_set_issuer_bill_a t 
+                        left join sd_issuer si on si.issuer_id = t.issuer_id 
+                        left join sd_set_issuer_flow ssif1 on ssif1.bill_id = t.bill_id and ssif1.deal_type='01' 
+                        left join sd_set_issuer_flow ssif2 on ssif2.bill_id = t.bill_id and ssif2.deal_type='04' 
+                        <where>
+                            <include refid="factor_sql_select"></include>
+                        </where>
+                    )A) 
+                    <where>
+                        <include refid="list_size_sql"></include>
+                    </where>
+                    order by rowno
+    </select>
+    
+    <!-- 出单 -->
+    <update id="outIssuerBill">
+        update sd_set_issuer_bill set bill_status='01' where bill_id = #{billId }
+    </update>
+    
+    <update id="outIssuerBillY">
+        update sd_set_issuer_bill_y set bill_status='01' where bill_id = #{billId }
+    </update>
+    
+    <update id="outIssuerBillW">
+        update sd_set_issuer_bill_w set bill_status='01' where bill_id = #{billId }
+    </update>
+    
+    <update id="outIssuerBillTW">
+        update sd_set_issuer_bill_tw set bill_status='01' where bill_id = #{billId }
+    </update>
+    
+    <update id="outIssuerBillA">
+        update sd_set_issuer_bill_a set bill_status='01' where bill_id = #{billId }
+    </update>
+    
+    <update id="outIssuerBillTA">
+        update sd_set_issuer_bill_ta set bill_status='01' where bill_id = #{billId }
+    </update>
+    
+    <!-- 消核 -->
+    <update id="checkIssuerBill" parameterType="java.util.Map">
+        update sd_set_issuer_bill set bill_status='04',set_factamt = #{SetFactAmt } where bill_id = #{BillId }
+    </update>
+    
+    <update id="checkIssuerBillY" parameterType="java.util.Map">
+        update sd_set_issuer_bill_y set bill_status='04',set_factamt = #{SetFactAmt } where bill_id = #{BillId }
+    </update>
+    
+    <update id="checkIssuerBillW" parameterType="java.util.Map">
+        update sd_set_issuer_bill_w set bill_status='04',set_factamt = #{SetFactAmt } where bill_id = #{BillId }
+    </update>
+    
+    <update id="checkIssuerBillTW" parameterType="java.util.Map">
+        update sd_set_issuer_bill_tw set bill_status='04',set_factamt = #{SetFactAmt } where bill_id = #{BillId }
+    </update>
+    
+    <update id="checkIssuerBillA" parameterType="java.util.Map">
+        update sd_set_issuer_bill_a set bill_status='04',set_factamt = #{SetFactAmt } where bill_id = #{BillId }
+    </update>
+    
+    <update id="checkIssuerBillTA" parameterType="java.util.Map">
+        update sd_set_issuer_bill_ta set bill_status='04',set_factamt = #{SetFactAmt } where bill_id = #{BillId }
+    </update>
+    
+    <!-- 出单记录 -->
+    <insert id="saveDealFlow" parameterType="java.util.Map" >
+        insert into sd_set_issuer_flow (flow_id,bill_id,deal_type,deal_status,deal_time, deal_user,deal_advise,deal_remark) values 
+            (SEQ_SD_SET_ISSUERFLOW_ID.nextval,#{BillId},#{DealType},#{DealStatus},#{DealTime},#{DealUser},#{DealAdvise,jdbcType=VARCHAR},#{DealRemark})
+    </insert>
+    
+    <sql id="list_size_sql">
+        <if test="status != null and status !=''">rowno between #{startRowNum} and #{endRowNum}</if>
+    </sql>
+    
+    <sql id="factor_sql">
+        <!-- 动态语句  -->
+        <if test="merchId != null and merchId != ''"> and ssd.merch_id like CONCAT(CONCAT('%', #{merchId}), '%')</if>
+        <if test="merchName != null and merchName != ''"> and smbi.register_name like CONCAT(CONCAT('%', #{merchName}), '%')</if>
+        <if test="tranType != null and tranType != ''"> and ssd.tran_type = #{tranType }</if>
+        <if test="Contract_begin != null and Contract_begin != ''"> and to_date(ssd.clear_date, 'yyyy-mm-dd') &gt; to_date('${Contract_begin}','yyyy-mm-dd') </if>
+        <if test="Contract_end != null and Contract_end != ''"> and to_date(ssd.clear_date, 'yyyy-mm-dd') &lt; to_date('${Contract_end}','yyyy-mm-dd')+1 </if>
+    </sql>
+    
+    <sql id="factor_sql_SZT">
+        <!-- 深圳通动态语句  -->
+        t.tran_num>0 and substr(t.bill_id,length(t.bill_id)-1,2)=#{type }
+        <!-- 查询一个 -->
+        <if test="billId != null and billId != ''">and t.bill_id= #{billId }</if>
+        
+        <if test="issuerName != null and issuerName != ''"> and si.short_name like CONCAT(CONCAT('%', #{issuerName}), '%')</if>
+        <if test="issuerId != null and issuerId != ''"> and si.issuer_id like CONCAT(CONCAT('%', #{issuerId}), '%')</if>
+        <if test="Contract_begin != null and Contract_begin != ''"> and to_date(t.create_time, 'yyyy-mm-dd') &gt; to_date('${Contract_begin}','yyyy-mm-dd') </if>
+        <if test="Contract_end != null and Contract_end != ''"> and to_date(t.create_time, 'yyyy-mm-dd') &lt; to_date('${Contract_end}','yyyy-mm-dd')+1 </if>
+    </sql>
+    
+    <sql id="factor_sql_month">
+        <if test="issuerId != null and issuerId != ''"> and si.issuer_id like CONCAT(CONCAT('%', #{issuerId}), '%')</if>
+        <if test="issuerName != null and issuerName != ''"> and instr(si.short_name,#{issuerName })>0</if>
+        <if test="Contract_begin != null and Contract_begin != ''"> and to_date(create_time, 'yyyy-mm') &gt; to_date(#{Contract_begin },'yyyy-mm')-1 </if>
+        <if test="Contract_end != null and Contract_end != ''"> and to_date(create_time, 'yyyy-mm') &lt; to_date(#{Contract_end },'yyyy-mm')+1</if>
+    </sql>
+    
+    <sql id="factor_sql_select">
+        <!-- 通用动态语句  -->
+        t.tran_num>0
+        <!-- 查询一个 -->
+        <if test="billId != null and billId != ''">and t.bill_id= #{billId }</if>
+        <!-- 模糊查询 -->
+        <if test="issuerName != null and issuerName != ''"> and si.short_name like CONCAT(CONCAT('%', #{issuerName}), '%')</if>
+        <if test="issuerId != null and issuerId != ''"> and si.issuer_id like CONCAT(CONCAT('%', #{issuerId}), '%')</if>
+        <if test="Contract_begin != null and Contract_begin != ''"> and to_date(create_time, 'yyyy-mm-dd') &gt; to_date('${Contract_begin}','yyyy-mm-dd') </if>
+        <if test="Contract_end != null and Contract_end != ''"> and to_date(create_time, 'yyyy-mm-dd') &lt; to_date('${Contract_end}','yyyy-mm-dd')+1 </if>
+    </sql>
+</mapper>
