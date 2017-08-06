@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -200,6 +201,24 @@ public class CommonUtil {
 				}else{
 					buffer.append(param[i]+"|");
 				}
+			}
+		}
+		return buffer.toString();
+	}
+	
+	/**
+	 * @Description: 校验reqParamMap中是否含有param中的参数
+	 * @author:   Zeng Dongcheng
+	 * @Date:     2017年8月6日下午10:12:58 
+	 * @param reqParamMap 待校验对象
+	 * @param param		     参考指标
+	 * @return
+	 */
+	public static String paramValidate(Map<String,String> reqParamMap,List<String> param){
+		StringBuffer buffer = new StringBuffer();
+		for(String key : param){
+			if(StringUtils.isEmpty(reqParamMap.get(key))){
+				buffer.append(key).append("|");
 			}
 		}
 		return buffer.toString();

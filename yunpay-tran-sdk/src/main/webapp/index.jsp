@@ -377,7 +377,7 @@
     	<br>
     	<div class="panel panel-default">
 			<div class="panel-body">
-				<form  id="barform" class="form-horizontal"  role="form" action="pay/micropay">
+				<form  id="barform" class="form-horizontal"  action="pay/micropay">
 					<div class="form-group">
 	                    <label class="col-lg-3 control-label">商户号*</label>
 	                    <div class="col-lg-5">
@@ -429,7 +429,7 @@
     	<br>
     	<div class="panel panel-default">
 			<div class="panel-body">
-				<form  id="scanform" class="form-horizontal"  role="form" action="pay/unifiedorder">
+				<form  id="scanform" class="form-horizontal"  action="pay/unifiedorder">
 					<div class="form-group">
 	                    <label class="col-lg-3 control-label">商户号*</label>
 	                    <div class="col-lg-5">
@@ -487,7 +487,7 @@
     	<br>
     	<div class="panel panel-default">
 			<div class="panel-body">
-				<form  id="queryform" class="form-horizontal"  role="form" action="pay/order/query">
+				<form  id="queryform" class="form-horizontal" action="pay/order/query">
 					<div class="form-group">
 	                    <label class="col-lg-3 control-label">商户号*</label>
 	                    <div class="col-lg-5">
@@ -521,7 +521,7 @@
       <br>
     	<div class="panel panel-default">
 			<div class="panel-body">
-				<form  id="closeform" class="form-horizontal"  role="form" action="pay/order/close">
+				<form  id="closeform" class="form-horizontal"  action="pay/order/close">
 					<div class="form-group">
 	                    <label class="col-lg-3 control-label">商户号*</label>
 	                    <div class="col-lg-5">
@@ -555,7 +555,7 @@
       <br>
     	<div class="panel panel-default">
 			<div class="panel-body">
-				<form  id="reverseform" class="form-horizontal"  role="form" action="pay/order/reverse">
+				<form  id="reverseform" class="form-horizontal" action="pay/order/reverse">
 					<div class="form-group">
 	                    <label class="col-lg-3 control-label">商户号*</label>
 	                    <div class="col-lg-5">
@@ -589,7 +589,7 @@
       <br>
     	<div class="panel panel-default">
 			<div class="panel-body">
-				<form  id="refundform" class="form-horizontal"  role="form" action="pay/order/refund">
+				<form  id="refundform" class="form-horizontal" action="pay/order/refund">
 					<div class="form-group">
 	                    <label class="col-lg-3 control-label">商户号*</label>
 	                    <div class="col-lg-5">
@@ -638,7 +638,7 @@
       <br>
     	<div class="panel panel-default">
 			<div class="panel-body">
-				<form  id="refundqueryform" class="form-horizontal"  role="form" action="pay/refund/query">
+				<form  id="refundqueryform" class="form-horizontal" action="pay/refund/query">
 					<div class="form-group">
 	                    <label class="col-lg-3 control-label">商户号*</label>
 	                    <div class="col-lg-5">

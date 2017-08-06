@@ -115,7 +115,7 @@ $(document).ready(function() {
     	<br>
     	<div class="panel panel-default">
 			<div class="panel-body">
-				<form  id="logoform" class="form-horizontal"  role="form" action="card/upload/logo">
+				<form  id="logoform" class="form-horizontal" action="card/upload/logo">
 					<div class="form-group">
 	                    <label class="col-lg-3 control-label">商户号*</label>
 	                    <div class="col-lg-5">
@@ -143,7 +143,7 @@ $(document).ready(function() {
     	<br>
     	<div class="panel panel-default">
 			<div class="panel-body">
-				<form  id="cardform" class="form-horizontal"  role="form" action="card/create/card">
+				<form  id="cardform" class="form-horizontal" action="card/create/card">
 					<div class="form-group">
 	                    <label class="col-lg-2 control-label">卡券类型</label>
 	                    <div class="col-xs-6">

@@ -1,7 +1,6 @@
 package com.yunpay.sdk.ctrl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -149,7 +148,7 @@ public class CardCtrl extends BaseCtrl{
 			validParam.add("fixed_begin_term");
 		}
 		//参数验证
-		String valiString = CommonUtil.paramValidate(reqParamMap,(String[])validParam.toArray());
+		String valiString = CommonUtil.paramValidate(reqParamMap,validParam);
 		if(StringUtils.isNotEmpty(valiString)){
 			return new Message(ErrorCode.PARAM_IS_NULL.getCode(),valiString+"参数为空");
 		} 
